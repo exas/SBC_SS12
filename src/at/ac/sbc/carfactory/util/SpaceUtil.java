@@ -6,9 +6,12 @@ import java.net.URISyntaxException;
 import org.mozartspaces.core.Capi;
 import org.mozartspaces.core.ContainerReference;
 import org.mozartspaces.core.DefaultMzsCore;
+import org.mozartspaces.core.Entry;
 import org.mozartspaces.core.MzsConstants.Container;
 import org.mozartspaces.core.MzsCore;
 import org.mozartspaces.core.MzsCoreException;
+
+import at.ac.sbc.carfactory.domain.CarPart;
 
 
 public class SpaceUtil {
@@ -17,7 +20,7 @@ public class SpaceUtil {
 	private Capi capi;
 	private MzsCore core;
 
-	SpaceUtil() {
+	public SpaceUtil() {
 		// TODO: Singleton?
 		try {
 			this.spaceURI = new URI(ConfigSettings.spaceProtocol + "://" + ConfigSettings.spaceURL + ":" + ConfigSettings.spacePort);
@@ -31,15 +34,44 @@ public class SpaceUtil {
 	/*
 	 * connect to space
 	 */
-	public void init() {
-		core = DefaultMzsCore.newInstance();
-        capi = new Capi(core);
+	private void init() {
+		this.core = DefaultMzsCore.newInstance();
+        this.capi = new Capi(core);
 	}
 	
-	public void createContainer(String name) {
+	public MzsCore getMozartSpaceCore() {
+		return this.core;
+	}
+	
+	public ContainerReference createContainer(String name) {
 		// create a container
+		ContainerReference container = null;
         try {
-			ContainerReference container = capi.createContainer(name, this.spaceURI, Container.UNBOUNDED, null, null, null);
+        	container = capi.createContainer(name, this.spaceURI, Container.UNBOUNDED, null, null, null);
+		} catch (MzsCoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return container;
+	}
+	
+	public ContainerReference lookupContainer(String name) {
+		// lookup a container
+		ContainerReference container = null;
+        try {
+			container = capi.lookupContainer(name, this.spaceURI, Container.UNBOUNDED, null, null, null);
+		} catch (MzsCoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return container;
+	}
+	
+	public void writeCarPartEntry(ContainerReference cRef, CarPart part) {
+        try {
+        	System.out.println("writing");
+        	capi.write(cRef, new Entry(part));
+        	System.out.println("writing done");
 		} catch (MzsCoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -48,5 +80,7 @@ public class SpaceUtil {
 	
 	public void disconnect() {
 		this.core.shutdown(true);
+		System.out.println("DONE SHUTDOWN");
+		System.out.println(this.core);
 	}
 }

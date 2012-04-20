@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SBC_12" default="compile" basedir=".">
+    <description>SBC_12 Exercise 1</description>
+
+    <!-- set global properties for this build -->
+    <property name="src.dir" location="src" />
+    <property name="lib.dir" location="lib" />
+    <property name="build.dir" location="build" />
+	<property name="dist.dir" location="dist" />
+	<property name="mzspaces.file" value="mozartspaces-dist-2.1-SNAPSHOT-r11986-all-with-dependencies.jar" />
+
+    <path id="project.classpath">
+    	<fileset dir="${lib.dir}">
+    		<include name="${mzspaces.file}"/>
+    	</fileset>
+        <pathelement location="${build.dir}"/>
+    </path>
+
+    <target name="init">
+        <!-- maybe we have to do something additional later on? -->
+    </target>
+
+    <target name="compile" depends="init" description="compile the source " >
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="project.classpath" debug="true" />
+    </target>
+
+    <target name="run-server" depends="compile" description="MozartspacesServer" >
+        <java classname="org.mozartspaces.core.Server" classpathref="project.classpath" fork="true" />
+    </target>
+	
+	<target name="create-domain-jar">
+        <mkdir dir="${dist.dir}"/>
+        <jar destfile="${dist.dir}/carFactoryDomain.jar">
+        	<fileset dir="${build.dir}" id="domain">
+        		<include name="at/ac/sbc/carfactory/domain/*.class" />
+       		</fileset>
+        </jar>
+	</target>
+
+    <target name="clean" description="clean" >
+        <delete dir="${build.dir}"/>
+    </target>
+</project>
