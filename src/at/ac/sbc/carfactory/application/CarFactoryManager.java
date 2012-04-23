@@ -11,6 +11,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.notifications.Notification;
 import org.mozartspaces.notifications.NotificationListener;
@@ -19,6 +20,7 @@ import org.mozartspaces.notifications.Operation;
 
 import at.ac.sbc.carfactory.domain.CarPartEnum;
 import at.ac.sbc.carfactory.util.ConfigSettings;
+import at.ac.sbc.carfactory.util.LogListener;
 import at.ac.sbc.carfactory.util.SpaceUtil;
 
 /**
@@ -28,7 +30,7 @@ import at.ac.sbc.carfactory.util.SpaceUtil;
  * @author spookyTU
  * 
  */
-public class CarFactoryManager implements NotificationListener {
+public class CarFactoryManager implements ICarFactoryManager, NotificationListener {
 
 	private static final int poolSize = 15;
 	private static final int maxPoolSize = 50;
@@ -39,7 +41,9 @@ public class CarFactoryManager implements NotificationListener {
 	private Long idCounter;
 	private NotificationManager notifManager;
 	private ArrayList<Notification> notifications;
+	private List<LogListener> logListeners;
 	private SpaceUtil space;
+	private Logger logger = Logger.getLogger(CarFactoryManager.class);
 
 	public CarFactoryManager() {
 		this.threadPool = new ThreadPoolExecutor(CarFactoryManager.poolSize, CarFactoryManager.maxPoolSize,
@@ -104,6 +108,39 @@ public class CarFactoryManager implements NotificationListener {
 	@Override
 	public void entryOperationFinished(Notification notif, Operation oper, List<? extends Serializable> objs) {
 		System.out.println("Notified: " + notif + " with operation: " + oper + " on:" + objs);
+	}
+
+	@Override
+	public void createProducer() {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void deleteProducer(long id) {
+		// TODO Auto-generated method stub
+	}
+	
+	@Override
+	public void log(String message) {
+		this.logger.info(message);
+		if(this.logListeners != null) {
+			for (int i = 0; i < this.logListeners.size(); i++) {
+				this.logListeners.get(i).logMessageAdded(message);
+			}
+		}
+	}
+
+	@Override
+	public void addLogListener(LogListener listener) {
+		if(this.logListeners == null) {
+			this.logListeners = new ArrayList<LogListener>();
+		}
+		this.logListeners.add(listener);
 	}
 
 }

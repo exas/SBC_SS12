@@ -8,7 +8,7 @@ public class CarFactory {
 
 	public static void main(String[] args) {
 		// TODO: start UI and initialize logic layer
-		//new CarFactoryUI();
+		new CarFactoryUI();
 		CarFactoryManager carFactoryManager = new CarFactoryManager();
 		
 		carFactoryManager.createProducer(2, CarPartEnum.CAR_MOTOR);
