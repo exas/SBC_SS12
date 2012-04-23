@@ -8,10 +8,13 @@
     <property name="build.dir" location="build" />
 	<property name="dist.dir" location="dist" />
 	<property name="mzspaces.file" value="mozartspaces-dist-2.1-SNAPSHOT-r11986-all-with-dependencies.jar" />
+	<property name="log4j.file" value="log4j-1.2.16.jar" />
+	<property name="mzspaces.config.client" value="mozartspaces_client.xml" />
 
     <path id="project.classpath">
     	<fileset dir="${lib.dir}">
     		<include name="${mzspaces.file}"/>
+    		<include name="${log4j.file}"/>
     	</fileset>
         <pathelement location="${build.dir}"/>
     </path>
@@ -24,9 +27,22 @@
         <mkdir dir="${build.dir}"/>
         <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="project.classpath" debug="true" />
     </target>
+	
+    <target name="run-carFactoryManager" depends="compile" description="Car-Factory Manager App" >
+        <java classname="at.ac.sbc.carfactory.CarFactory" classpathref="project.classpath" fork="true" >
+        	<jvmarg value="-Dmozartspaces.configurationFile=${mzspaces.config.client}" />
+        </java>
+    </target>
 
     <target name="run-server" depends="compile" description="MozartspacesServer" >
-        <java classname="org.mozartspaces.core.Server" classpathref="project.classpath" fork="true" />
+        <java classname="org.mozartspaces.core.Server" classpathref="project.classpath" fork="true">
+        	<!--<classpath>
+        		<pathelement location="${anteater.home}/resources"/>
+        	    <fileset dir="${dist.dir}">
+        	    	<include name="${dist.dir}/carFactoryDomain.jar"/>
+        		</fileset>
+       		</classpath> -->
+        </java>
     </target>
 	
 	<target name="create-domain-jar">
