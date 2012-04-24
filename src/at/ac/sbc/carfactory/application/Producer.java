@@ -1,7 +1,10 @@
 package at.ac.sbc.carfactory.application;
 
+import org.apache.log4j.Logger;
+
 import at.ac.sbc.carfactory.domain.CarMotor;
 import at.ac.sbc.carfactory.domain.CarPartEnum;
+import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.SpaceUtil;
 
@@ -14,18 +17,19 @@ public class Producer implements Runnable {
 	private boolean running = true;
 	private boolean isWorking = false;
 	private SpaceUtil space;
+	private Logger logger = Logger.getLogger(Producer.class);
 
-	public Producer(long id) {
+	public Producer(long id) throws CarFactoryException {
 		this.delay = ConfigSettings.maxDelayWorkers;
 		this.init();
 	}
 
-	public Producer(long id, int delay) {
+	public Producer(long id, int delay) throws CarFactoryException {
 		this.delay = delay;
 		this.init();
 	}
 
-	private void init() {
+	private void init() throws CarFactoryException {
 		this.space = new SpaceUtil();
 	}
 
@@ -55,7 +59,11 @@ public class Producer implements Runnable {
 				case CAR_MOTOR:
 					CarMotor motor = new CarMotor();
 					motor.setId(1);
-					this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerName), motor);
+					try {
+						this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerName), motor);
+					} catch (CarFactoryException e) {
+						this.logger.info(e.getMessage());
+					}
 					System.out.println("Written to space");
 				default:
 					// TODO: NOTHING

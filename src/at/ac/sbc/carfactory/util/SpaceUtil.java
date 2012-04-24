@@ -20,13 +20,12 @@ public class SpaceUtil {
 	private Capi capi;
 	private MzsCore core;
 
-	public SpaceUtil() {
+	public SpaceUtil() throws CarFactoryException {
 		// TODO: Singleton?
 		try {
 			this.spaceURI = new URI(ConfigSettings.spaceProtocol + "://" + ConfigSettings.spaceURL + ":" + ConfigSettings.spacePort);
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new CarFactoryException("URI-Syntax error: " + e.getMessage());
 		}
 		this.init();
 	}
@@ -43,38 +42,35 @@ public class SpaceUtil {
 		return this.core;
 	}
 	
-	public ContainerReference createContainer(String name) {
+	public ContainerReference createContainer(String name) throws CarFactoryException {
 		// create a container
 		ContainerReference container = null;
         try {
         	container = capi.createContainer(name, this.spaceURI, Container.UNBOUNDED, null, null, null);
 		} catch (MzsCoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new CarFactoryException("Could not create container " + name + " at " + this.spaceURI + "\n" + e.getMessage());
 		}
         return container;
 	}
 	
-	public ContainerReference lookupContainer(String name) {
+	public ContainerReference lookupContainer(String name) throws CarFactoryException {
 		// lookup a container
 		ContainerReference container = null;
         try {
 			container = capi.lookupContainer(name, this.spaceURI, Container.UNBOUNDED, null, null, null);
 		} catch (MzsCoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new CarFactoryException("Could not find container " + name + " at " + this.spaceURI + "\n" + e.getMessage());
 		}
         return container;
 	}
 	
-	public void writeCarPartEntry(ContainerReference cRef, CarPart part) {
+	public void writeCarPartEntry(ContainerReference cRef, CarPart part) throws CarFactoryException {
         try {
         	System.out.println("writing");
         	capi.write(cRef, new Entry(part));
         	System.out.println("writing done");
 		} catch (MzsCoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new CarFactoryException("Could not write to container " + cRef.getStringRepresentation() + "\n" + e.getMessage());
 		}
 	}
 	

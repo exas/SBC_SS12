@@ -17,16 +17,20 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import at.ac.sbc.carfactory.application.ICarFactoryManager;
 import at.ac.sbc.carfactory.util.LogListener;
 
 public class CarFactoryUI extends JFrame implements LogListener {
 
 	private static final long serialVersionUID = 986427844864093227L;
 	private JTextArea loggerTextArea;
+	private ProducerPanel producerPanel;
+	private ICarFactoryManager carFactoryManager;
 
 	// TODO: finish UI
 	
-	public CarFactoryUI() {
+	public CarFactoryUI(ICarFactoryManager carFactoryManager) {
+		this.carFactoryManager = carFactoryManager;
 		this.setTitle("Car-Factory");
 		this.setSize(new Dimension(640, 480));
 		
@@ -48,7 +52,6 @@ public class CarFactoryUI extends JFrame implements LogListener {
 		this.setLayout(new GridBagLayout());
         this.setMinimumSize(new Dimension(640, 480));
 		this.setVisible(true);
-		System.out.println("TESTTEST");
 		this.initalizeMenu();
 		this.initializeComponents();
 	}
@@ -62,7 +65,7 @@ public class CarFactoryUI extends JFrame implements LogListener {
 		closeApp.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (JOptionPane.OK_OPTION == getValidationDialogResult()){
+				if (JOptionPane.OK_OPTION == getValidationDialogResult()) {
 					// TODO: close App
 				}
 			}
@@ -72,7 +75,7 @@ public class CarFactoryUI extends JFrame implements LogListener {
 		createProducer.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//TODO: call create Producer
+				CarFactoryUI.this.createProducer();
 			}
 		});
 		
@@ -97,7 +100,7 @@ public class CarFactoryUI extends JFrame implements LogListener {
         // position elements
 		GridBagConstraints c = new GridBagConstraints();
 
-		ProducerPanel producerPanel = new ProducerPanel();
+		this.producerPanel = new ProducerPanel(this);
 		
 		this.loggerTextArea = new JTextArea();
 		this.loggerTextArea.setEditable(false);
@@ -106,7 +109,7 @@ public class CarFactoryUI extends JFrame implements LogListener {
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.BOTH; c.insets = new Insets(10,10,10,10);
         c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 0.75; c.gridwidth = 1;
-        this.add(producerPanel, c);
+        this.add(this.producerPanel, c);
         c.gridx = 0; c.gridy = 1; c.weightx = 1; c.weighty = 0.25;
         this.add(textAreaScrollPane, c);
 	}
@@ -121,10 +124,20 @@ public class CarFactoryUI extends JFrame implements LogListener {
 	
 	private void addLogMessage(String message) {
 		this.loggerTextArea.append(message);
+		//this.loggerTextArea.repaint();
+	}
+	
+	public long createProducer() {
+		long id = this.carFactoryManager.createProducer();
+		// TODO: show confirmation dialog 
+		if(id != -1) {
+			this.producerPanel.addProducer(id);
+		}
+		return id;
 	}
 
 	@Override
 	public void logMessageAdded(String message) {
-		this.addLogMessage(message);
+		this.addLogMessage(message + "\n");
 	}
 }

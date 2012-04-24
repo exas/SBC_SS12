@@ -5,9 +5,9 @@ import at.ac.sbc.carfactory.util.LogListener;
 
 public interface ICarFactoryManager {
 
-	public void createProducer();
+	public long createProducer();
 	
-	public void createProducer(int numParts, CarPartEnum carPart);
+	public long createProducer(int numParts, CarPartEnum carPart);
 	
 	public void assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID);
 	

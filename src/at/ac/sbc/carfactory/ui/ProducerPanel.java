@@ -30,8 +30,11 @@ public class ProducerPanel extends JPanel {
 	private static final long serialVersionUID = 2792120697879951769L;
 	
 	private JTable table = null;
+	private DefaultTableModel tableModel;
+	private CarFactoryUI parent;
 
-	public ProducerPanel() {
+	public ProducerPanel(CarFactoryUI parent) {
+		this.parent = parent;
 		this.initialize();
 	}
 	
@@ -59,7 +62,7 @@ public class ProducerPanel extends JPanel {
         createProducerBt.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO: call create Producer method
+				ProducerPanel.this.parent.createProducer();
 			}
 		});
         
@@ -72,7 +75,8 @@ public class ProducerPanel extends JPanel {
 	private JTable initProducerTable() {
 		if (table == null) {
 			table = new JTable();
-			table.setModel(new DefaultTableModel(null, TableHeaders.producerHeaders));
+			tableModel = new DefaultTableModel(null, TableHeaders.producerHeaders);
+			table.setModel(tableModel);
 			//table.setModel(getMyTableModel());
 			table.addMouseListener(new MouseAdapter() {
 				private void maybeShowPopup(MouseEvent e) {
@@ -170,5 +174,38 @@ public class ProducerPanel extends JPanel {
 		contextMenu.add(assignWorkMenuItem);
 
 		return contextMenu;
+	}
+	
+	public void addProducer(long id) {
+        JButton deleteProducerBt = new JButton("Delete");
+        deleteProducerBt.setName(String.valueOf(id));
+        deleteProducerBt.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO: delete action
+			}
+		});
+        JButton assignWorkBt = new JButton("assign work");
+        assignWorkBt.setName(String.valueOf(id));
+        assignWorkBt.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO: assign work action
+			}
+		});
+		
+		Object[] temp = new Object[4];
+		temp[0] = id;
+		temp[1] = 0;
+		temp[2] = deleteProducerBt;
+		temp[3] = assignWorkBt;
+		this.tableModel.addRow(temp);
+		this.tableModel.fireTableDataChanged();
+	}
+	
+	public void removeProducer(long id) {
+		// TODO: remove producer
+		//this.tableModel.removeRow(row)
+		this.tableModel.fireTableDataChanged();
 	}
 }

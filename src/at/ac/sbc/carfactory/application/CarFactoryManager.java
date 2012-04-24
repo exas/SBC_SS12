@@ -11,7 +11,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.notifications.Notification;
 import org.mozartspaces.notifications.NotificationListener;
@@ -19,6 +20,7 @@ import org.mozartspaces.notifications.NotificationManager;
 import org.mozartspaces.notifications.Operation;
 
 import at.ac.sbc.carfactory.domain.CarPartEnum;
+import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.LogListener;
 import at.ac.sbc.carfactory.util.SpaceUtil;
@@ -43,7 +45,6 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 	private ArrayList<Notification> notifications;
 	private List<LogListener> logListeners;
 	private SpaceUtil space;
-	private Logger logger = Logger.getLogger(CarFactoryManager.class);
 
 	public CarFactoryManager() {
 		this.threadPool = new ThreadPoolExecutor(CarFactoryManager.poolSize, CarFactoryManager.maxPoolSize,
@@ -53,15 +54,20 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		// ExecutorService executorService = Executors.newCachedThreadPool();
 		this.initSpace();
 		this.initNotificationManager();
+		this.log("CarFactoryManager instantiated");
 	}
 
 	/*
 	 * connect to space and create (if not existent) a container
 	 */
 	private void initSpace() {
-		this.space = new SpaceUtil();
-		if(this.space.lookupContainer(ConfigSettings.containerName) == null) {
-			this.space.createContainer(ConfigSettings.containerName);
+		try {
+			this.space = new SpaceUtil();
+			if(this.space.lookupContainer(ConfigSettings.containerName) == null) {
+				this.space.createContainer(ConfigSettings.containerName);
+			}
+		} catch (CarFactoryException ex) {
+			this.log(ex.getMessage());
 		}
 	}
 
@@ -72,20 +78,39 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 			this.notifications.add(notifManager.createNotification(
 					this.space.lookupContainer(ConfigSettings.containerName), this, Operation.WRITE, null, null));
 		} catch (MzsCoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.log(e.getMessage());
+		} catch (CarFactoryException e) {
+			this.log(e.getMessage());
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.log(e.getMessage());
 		}
 	}
-
-	public void createProducer(int numParts, CarPartEnum carPart) {
-		Producer producer = new Producer(idCounter, (new Random()).nextInt(ConfigSettings.maxDelayWorkers));
-		producer.setWorkProperties(numParts, carPart);
-		this.producers.put(this.idCounter, producer);
+	
+	@Override
+	public long createProducer() {
+		long id = this.idCounter;
+		Producer producer = null;
+		try {
+			producer = new Producer(id, (new Random()).nextInt(ConfigSettings.maxDelayWorkers));
+		} catch (CarFactoryException e) {
+			this.log(e.getMessage());
+			return -1;
+		}
+		this.producers.put(id, producer);
 		this.threadPool.execute(producer);
 		this.idCounter++;
+		this.log("Created Producer with ID: " + id);
+		return id;
+	}
+
+	@Override
+	public long createProducer(int numParts, CarPartEnum carPart) {
+		long id = this.createProducer();
+		if(id == -1) {
+			return id;
+		}
+		this.assignWorkToProducer(numParts, carPart, id);
+		return id;
 	}
 
 	public void shutdownProducer(long id) {
@@ -111,13 +136,14 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 	}
 
 	@Override
-	public void createProducer() {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
 	public void assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID) {
-		// TODO Auto-generated method stub
+		Producer producer = this.producers.get(producerID);
+		if (producer == null) {
+			//TODO: notify gui
+			this.log("AssignWorkError: Could not find producer with id " + producerID);
+			return;
+		}
+		producer.setWorkProperties(numParts, carPart);
 	}
 
 	@Override
@@ -127,7 +153,8 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 	
 	@Override
 	public void log(String message) {
-		this.logger.info(message);
+		Logger.getLogger(CarFactoryManager.class.getName()).log(Level.INFO, message, message);
+		//this.logger.info(message);
 		if(this.logListeners != null) {
 			for (int i = 0; i < this.logListeners.size(); i++) {
 				this.logListeners.get(i).logMessageAdded(message);
