@@ -3,19 +3,19 @@ package at.ac.sbc.carfactory.application;
 import org.apache.log4j.Logger;
 
 import at.ac.sbc.carfactory.domain.CarMotor;
-import at.ac.sbc.carfactory.domain.CarPartEnum;
+import at.ac.sbc.carfactory.domain.WorkTask;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.SpaceUtil;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
 public class Producer implements Runnable {
 
 	private long id;
 	private int delay;
-	private int curNumParts;
-	private CarPartEnum curCarPart;
 	private boolean running = true;
-	private boolean isWorking = false;
+	private SynchronousQueue<WorkTask> tasks;
 	private SpaceUtil space;
 	private Logger logger = Logger.getLogger(Producer.class);
 
@@ -36,22 +36,23 @@ public class Producer implements Runnable {
 	@Override
 	public void run() {
 		while (running == true) {
-			// TODO: wait for work
-			if (this.isWorking == true) {
-				this.produce();
+			try {
+				WorkTask task = this.tasks.poll(1000, TimeUnit.MILLISECONDS);
+				this.produce(task);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		}
-		while (this.isWorking == true) {
-			// TODO: wait for work to finish
 		}
 		System.out.println("Producer finished");
 	}
 
-	public void produce() {
+	public void produce(WorkTask task) {
 		try {
-			while (this.curNumParts > 0) {
+			while (task.getNumParts() > 0) {
+				Thread.sleep(delay);
 				// TODO: produce part
-				switch (this.curCarPart) {
+				switch (task.getCarPart()) {
 				case CAR_BODY:
 					// TODO: Produce CAR_BODY
 				case CAR_TIRE:
@@ -68,22 +69,22 @@ public class Producer implements Runnable {
 				default:
 					// TODO: NOTHING
 				}
-				System.out.println("PRODUCED: and delay is: " + delay);
-				Thread.sleep(delay);
-				this.curNumParts--;
+				System.out.println("PRODUCED: with delay: " + delay);
+				
 			}
-			this.isWorking = false;
-
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	public void setWorkProperties(int numParts, CarPartEnum carPart) {
-		this.curNumParts = numParts;
-		this.curCarPart = carPart;
-		this.isWorking = true;
+	public void addWorkTask(WorkTask task) {
+		try {
+			this.tasks.put(task);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void shutdown() {

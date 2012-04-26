@@ -9,13 +9,13 @@ public interface ICarFactoryManager {
 	
 	public long createProducer(int numParts, CarPartEnum carPart);
 	
-	public void assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID);
+	public boolean assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID);
 	
-	public void deleteProducer(long id);
+	public boolean deleteProducer(long id);
 	
-	public void shutdownProducer(long id);
+	public boolean shutdownProducer(long id);
 	
-	public void shutdown();
+	public boolean shutdown();
 	
 	public void log(String message);
 	

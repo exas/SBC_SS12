@@ -20,6 +20,7 @@ import org.mozartspaces.notifications.NotificationManager;
 import org.mozartspaces.notifications.Operation;
 
 import at.ac.sbc.carfactory.domain.CarPartEnum;
+import at.ac.sbc.carfactory.domain.WorkTask;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.LogListener;
@@ -113,14 +114,16 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		return id;
 	}
 
-	public void shutdownProducer(long id) {
+	@Override
+	public boolean shutdownProducer(long id) {
 		if (this.producers.get(id) != null) {
 			this.producers.get(id).shutdown();
 		}
+		return true;
 	}
 	
-	public void shutdown() {
-		// TODO: give threads time to finish work
+	@Override
+	public boolean shutdown() {
 		System.out.println("Number of Producers: " + this.producers.size());
 		Iterator<Long> it = this.producers.keySet().iterator();
 		while(it.hasNext()) {
@@ -128,6 +131,7 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		}
 		this.threadPool.shutdown();
 		this.space.disconnect();
+		return true;
 	}
 
 	@Override
@@ -136,25 +140,26 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 	}
 
 	@Override
-	public void assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID) {
+	public boolean assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID) {
 		Producer producer = this.producers.get(producerID);
 		if (producer == null) {
 			//TODO: notify gui
 			this.log("AssignWorkError: Could not find producer with id " + producerID);
-			return;
+			return false;
 		}
-		producer.setWorkProperties(numParts, carPart);
+		producer.addWorkTask(new WorkTask(numParts, carPart));
+		return true;
 	}
 
 	@Override
-	public void deleteProducer(long id) {
-		// TODO Auto-generated method stub
+	public boolean deleteProducer(long id) {
+		this.shutdownProducer(id);
+		return true;
 	}
 	
 	@Override
 	public void log(String message) {
 		Logger.getLogger(CarFactoryManager.class.getName()).log(Level.INFO, message, message);
-		//this.logger.info(message);
 		if(this.logListeners != null) {
 			for (int i = 0; i < this.logListeners.size(); i++) {
 				this.logListeners.get(i).logMessageAdded(message);
