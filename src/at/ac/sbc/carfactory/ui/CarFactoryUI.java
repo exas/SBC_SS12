@@ -54,6 +54,8 @@ public class CarFactoryUI extends JFrame implements LogListener {
 		this.setVisible(true);
 		this.initalizeMenu();
 		this.initializeComponents();
+		// just in case swing doesn't do it itself --> validate GUI so that it is shown correctly
+		this.validate();
 	}
 	
 	private void initalizeMenu() {

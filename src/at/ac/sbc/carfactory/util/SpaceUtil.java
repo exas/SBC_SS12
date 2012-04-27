@@ -59,7 +59,8 @@ public class SpaceUtil {
         try {
 			container = capi.lookupContainer(name, this.spaceURI, Container.UNBOUNDED, null, null, null);
 		} catch (MzsCoreException e) {
-			throw new CarFactoryException("Could not find container " + name + " at " + this.spaceURI + "\n" + e.getMessage());
+			//throw new CarFactoryException("Could not find container " + name + " at " + this.spaceURI + "\n" + e.getMessage());
+			return null;
 		}
         return container;
 	}

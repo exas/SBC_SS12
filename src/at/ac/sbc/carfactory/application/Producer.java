@@ -30,6 +30,7 @@ public class Producer implements Runnable {
 	}
 
 	private void init() throws CarFactoryException {
+		this.tasks = new SynchronousQueue<WorkTask>();
 		this.space = new SpaceUtil();
 	}
 
@@ -38,7 +39,9 @@ public class Producer implements Runnable {
 		while (running == true) {
 			try {
 				WorkTask task = this.tasks.poll(1000, TimeUnit.MILLISECONDS);
-				this.produce(task);
+				if(task != null) {
+					this.produce(task);
+				}
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

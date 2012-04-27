@@ -165,8 +165,8 @@ public class ProducerPanel extends JPanel {
 		assignWorkMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				table.getValueAt(rowIndex, 0);
-				// TODO: call assign work method
+				long producerID = (Long)table.getValueAt(rowIndex, 0);
+				new AssignWorkPanel(producerID);
 			}
 		});
 		
