@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -20,12 +21,16 @@ import javax.swing.JTextArea;
 import at.ac.sbc.carfactory.application.ICarFactoryManager;
 import at.ac.sbc.carfactory.util.LogListener;
 
-public class CarFactoryUI extends JFrame implements LogListener {
+public class CarFactoryUI extends JFrame implements LogListener, WindowListener, ActionListener {
 
 	private static final long serialVersionUID = 986427844864093227L;
 	private JTextArea loggerTextArea;
 	private ProducerPanel producerPanel;
 	private ICarFactoryManager carFactoryManager;
+	
+	private JMenuItem createProducer;
+	private JMenuItem closeApp;
+	private JMenuItem showStatistics;
 
 	// TODO: finish UI
 	
@@ -34,18 +39,8 @@ public class CarFactoryUI extends JFrame implements LogListener {
 		this.setTitle("Car-Factory");
 		this.setSize(new Dimension(640, 480));
 		
-		this.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				if (JOptionPane.OK_OPTION == getValidationDialogResult()){
-					//TODO: close APP
-				}
-			}
-			@Override
-			public void windowClosed(WindowEvent e) {
-				//TODO: close APP
-			}
-		});
+		this.addWindowListener(this);
+		
 		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		//this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
@@ -63,31 +58,14 @@ public class CarFactoryUI extends JFrame implements LogListener {
 		
 		JMenu fileMenu = new JMenu("File");		
 		
-		JMenuItem closeApp = new JMenuItem("Close App");
-		closeApp.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (JOptionPane.OK_OPTION == getValidationDialogResult()) {
-					// TODO: close App
-				}
-			}
-		});
+		closeApp = new JMenuItem("Close App");
+		closeApp.addActionListener(this);
 		
-		JMenuItem createProducer = new JMenuItem("Create Producer");
-		createProducer.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				CarFactoryUI.this.createProducer();
-			}
-		});
+		createProducer = new JMenuItem("Create Producer");
+		createProducer.addActionListener(this);
 		
-		JMenuItem showStatistics = new JMenuItem("Show Statistics");
-		showStatistics.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				//TODO: call show statistic panel
-			}
-		});
+		showStatistics = new JMenuItem("Show Statistics");
+		showStatistics.addActionListener(this);
 		
 		fileMenu.add(createProducer);
 		fileMenu.add(showStatistics);
@@ -142,4 +120,47 @@ public class CarFactoryUI extends JFrame implements LogListener {
 	public void logMessageAdded(String message) {
 		this.addLogMessage(message + "\n");
 	}
+
+	@Override
+	public void windowActivated(WindowEvent e) { }
+
+	@Override
+	public void windowClosed(WindowEvent e) { }
+
+	@Override
+	public void windowClosing(WindowEvent e) {
+		if (JOptionPane.OK_OPTION == getValidationDialogResult()){
+			//TODO: close APP
+			System.exit(0);
+		}
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent e) { }
+
+	@Override
+	public void windowDeiconified(WindowEvent e) { }
+
+	@Override
+	public void windowIconified(WindowEvent e) { }
+
+	@Override
+	public void windowOpened(WindowEvent e) { }
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		//check for source and then handle action for each menuItem
+		if (e.getSource() == createProducer)
+			CarFactoryUI.this.createProducer();
+		else if (e.getSource() == closeApp)
+			System.exit(0);
+		
+			//do stuff on closing app? but already covered with windowlistener closingWindow see above
+		//else if (e.getSource() == showStatistics)
+			//do stuff on showStatistics
+		
+	}
+	
+	
+	
 }
