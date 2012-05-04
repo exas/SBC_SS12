@@ -19,6 +19,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import at.ac.sbc.carfactory.application.ICarFactoryManager;
+import at.ac.sbc.carfactory.domain.CarPartEnum;
 import at.ac.sbc.carfactory.util.LogListener;
 
 public class CarFactoryUI extends JFrame implements LogListener, WindowListener, ActionListener {
@@ -114,6 +115,10 @@ public class CarFactoryUI extends JFrame implements LogListener, WindowListener,
 			this.producerPanel.addProducer(id);
 		}
 		return id;
+	}
+	
+	public boolean assignWorkToProducer(long id, int numParts, CarPartEnum carPart) {
+		return this.carFactoryManager.assignWorkToProducer(numParts, carPart, id);
 	}
 
 	@Override

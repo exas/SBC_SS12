@@ -2,7 +2,9 @@ package at.ac.sbc.carfactory.util;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 
+import org.mozartspaces.capi3.LabelCoordinator;
 import org.mozartspaces.core.Capi;
 import org.mozartspaces.core.ContainerReference;
 import org.mozartspaces.core.DefaultMzsCore;
@@ -46,7 +48,7 @@ public class SpaceUtil {
 		// create a container
 		ContainerReference container = null;
         try {
-        	container = capi.createContainer(name, this.spaceURI, Container.UNBOUNDED, null, null, null);
+        	container = capi.createContainer(name, this.spaceURI, Container.UNBOUNDED, Arrays.asList(new LabelCoordinator()), null, null);
 		} catch (MzsCoreException e) {
 			throw new CarFactoryException("Could not create container " + name + " at " + this.spaceURI + "\n" + e.getMessage());
 		}
@@ -68,7 +70,7 @@ public class SpaceUtil {
 	public void writeCarPartEntry(ContainerReference cRef, CarPart part) throws CarFactoryException {
         try {
         	System.out.println("writing");
-        	capi.write(cRef, new Entry(part));
+        	capi.write(cRef, 0, null, new Entry(part)); //LabelCoordinator.newCoordinationData(label, name)
         	System.out.println("writing done");
 		} catch (MzsCoreException e) {
 			throw new CarFactoryException("Could not write to container " + cRef.getStringRepresentation() + "\n" + e.getMessage());
