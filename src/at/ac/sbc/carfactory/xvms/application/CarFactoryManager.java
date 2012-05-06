@@ -25,10 +25,11 @@ import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarMotor;
 import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.CarTire;
-import at.ac.sbc.carfactory.util.CarFactoryException;
-import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.LogListener;
-import at.ac.sbc.carfactory.util.SpaceUtil;
+import at.ac.sbc.carfactory.xvms.util.CarFactoryException;
+import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
+import at.ac.sbc.carfactory.xvms.util.CoordinatorType;
+import at.ac.sbc.carfactory.xvms.util.SpaceUtil;
 
 import org.apache.log4j.Logger;
 
@@ -76,8 +77,8 @@ public class CarFactoryManager extends Model implements NotificationListener {
 	private void initSpace() {
 		try {
 			this.space = new SpaceUtil();
-			if(this.space.lookupContainer(ConfigSettings.containerName) == null) {
-				this.space.createContainer(ConfigSettings.containerName);
+			if(this.space.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
+				this.space.createContainer(ConfigSettings.containerCarPartsName, CoordinatorType.LABEL);
 			}
 		} catch (CarFactoryException ex) {
 			this.log(ex.getMessage());
@@ -89,7 +90,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		this.notifications = new ArrayList<Notification>();
 		try {
 			this.notifications.add(notifManager.createNotification(
-					this.space.lookupContainer(ConfigSettings.containerName), this, Operation.WRITE, null, null));
+					this.space.lookupContainer(ConfigSettings.containerCarPartsName), this, Operation.WRITE, null, null));
 		} catch (MzsCoreException e) {
 			this.log(e.getMessage());
 		} catch (CarFactoryException e) {
@@ -99,7 +100,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		}
 	}
 	
-	//@Override
+	@Override
 	public long createProducer() {
 		long id = this.idCounter;
 		logger.debug("CreateProducer called with id <"+id+">.");
@@ -128,7 +129,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		return id;
 	}
 
-	//@Override
+	@Override
 	public boolean shutdownProducer(long id) {
 		if (this.producers.get(id) != null) {
 			this.producers.get(id).shutdown();
@@ -136,7 +137,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		return true;
 	}
 	
-	//@Override
+	@Override
 	public boolean shutdown() {
 		System.out.println("Number of Producers: " + this.producers.size());
 		Iterator<Long> it = this.producers.keySet().iterator();
@@ -170,13 +171,20 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		List<CarPart> carParts = new ArrayList<CarPart>();
 		for(int i = numParts; i > 0; i--) {
 			CarPart carPart = null;
+			System.out.println("CARPARTTYPE: " + carPartType);
 			switch (carPartType) {
 				case CAR_BODY:
 					carPart = new CarBody();
+					System.out.println("BODY");
+					break;
 				case CAR_TIRE:
 					carPart = new CarTire();
+					System.out.println("TIRE");
+					break;
 				case CAR_MOTOR:
 					carPart = new CarMotor();
+					System.out.println("MOTOR");
+					break;
 				default:
 					// TODO: NOTHING
 			}
@@ -184,10 +192,13 @@ public class CarFactoryManager extends Model implements NotificationListener {
 			carParts.add(carPart);
 			this.carPartID++;
 		}
+		for(CarPart carPart : carParts) {
+			System.out.println("CarPart: " + carPart);
+		}
 		return carParts;
 	}
 
-	//@Override
+	@Override
 	public boolean deleteProducer(long id) {
 		this.shutdownProducer(id);
 		return true;

@@ -2,12 +2,11 @@ package at.ac.sbc.carfactory.xvms.application;
 
 import org.apache.log4j.Logger;
 
-import at.ac.sbc.carfactory.domain.CarMotor;
 import at.ac.sbc.carfactory.domain.CarPart;
-import at.ac.sbc.carfactory.domain.WorkTask;
-import at.ac.sbc.carfactory.util.CarFactoryException;
-import at.ac.sbc.carfactory.util.ConfigSettings;
-import at.ac.sbc.carfactory.util.SpaceUtil;
+import at.ac.sbc.carfactory.xvms.util.CarFactoryException;
+import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
+import at.ac.sbc.carfactory.xvms.util.SpaceUtil;
+import at.ac.sbc.carfactory.xvms.util.WorkTaskLabel;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -58,40 +57,24 @@ public class Producer implements Runnable {
 		try {
 			Thread.sleep(delay);
 			try {
-				this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerName), carPart);
+				WorkTaskLabel label = null;
+				switch (carPart.getCarPartType()) {
+					case CAR_BODY: 
+						label = WorkTaskLabel.CAR_BODY; 
+						break;
+					case CAR_MOTOR: 
+						label = WorkTaskLabel.CAR_MOTOR; 
+						break;
+					case CAR_TIRE: 
+						label = WorkTaskLabel.CAR_TIRE; 
+						break;
+					default:
+						// DO NOTHING
+				}
+						
+				this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), carPart, label);
 			} catch (CarFactoryException e) {
 				this.logger.info(e.getMessage());
-			}
-		} catch (InterruptedException e) {
-			this.logger.info(e.getMessage());
-			e.printStackTrace();
-		}
-	}
-
-	public void produce(WorkTask task) {
-		try {
-			while (task.getNumParts() > 0) {
-				Thread.sleep(delay);
-				// TODO: produce part
-				switch (task.getCarPartTyp()) {
-				case CAR_BODY:
-					// TODO: Produce CAR_BODY
-				case CAR_TIRE:
-					// TODO: Produce CAR_TIRE
-				case CAR_MOTOR:
-					CarMotor motor = new CarMotor();
-					motor.setId(1);
-					try {
-						this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerName), motor);
-					} catch (CarFactoryException e) {
-						this.logger.info(e.getMessage());
-					}
-					System.out.println("Written to space");
-				default:
-					// TODO: NOTHING
-				}
-				System.out.println("PRODUCED: with delay: " + delay);
-				task.setNumParts(task.getNumParts() - 1);
 			}
 		} catch (InterruptedException e) {
 			this.logger.info(e.getMessage());
