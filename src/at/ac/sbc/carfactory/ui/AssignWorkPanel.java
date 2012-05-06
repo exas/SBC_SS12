@@ -3,6 +3,8 @@ package at.ac.sbc.carfactory.ui;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -40,20 +42,20 @@ public class AssignWorkPanel extends JDialog {
 		numPartList.setSelectedIndex(0);
 
 		JButton assignWorkBt = new JButton("AssignWork");
-		//TODO track dialogs via CarFactoryUI so we can access them from outside (-> Controller)!
+		//TODO ?? really necessary? track dialogs via CarFactoryUI so we can access them from outside (-> Controller)!
 		
-//		assignWorkBt.addActionListener(new ActionListener() {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				if (AssignWorkPanel.this.parent.assignWorkToProducer(AssignWorkPanel.this.producerID,
-//						(Integer) numPartList.getSelectedItem(), (CarPartType) carPartList.getSelectedItem()) == false) {
-//					// TODO : showDialog
-//				}
-//				else {
-//					AssignWorkPanel.this.dispose();
-//				}
-//			}
-//		});
+		assignWorkBt.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (AssignWorkPanel.this.parent.assignWorkToProducer(AssignWorkPanel.this.producerID,
+						(Integer) numPartList.getSelectedItem(), (CarPartType) carPartList.getSelectedItem()) == false) {
+					// TODO : showDialog
+				}
+				else {
+					AssignWorkPanel.this.dispose();
+				}
+			}
+		});
 
 		c.anchor = GridBagConstraints.LINE_START;
 		c.fill = GridBagConstraints.BOTH;

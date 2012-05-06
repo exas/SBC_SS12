@@ -24,7 +24,7 @@ public class CarFactory {
 		JMSServer.getInstance().start();
 
 		Model model = new CarFactoryManager();
-		View view = new CarFactoryUI();
+		View view = new CarFactoryUI(model);
 		
 		@SuppressWarnings("unused")
 		Controller controller = new Controller(model,view);

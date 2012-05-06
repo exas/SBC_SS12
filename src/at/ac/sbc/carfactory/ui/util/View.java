@@ -19,5 +19,7 @@ public abstract class View extends JFrame{
 	public abstract void addCloseAppListener(ActionListener al);
 	
 	public abstract ProducerPanel getProducerPanel();
+
+	public abstract Model getModel();
 	
 }

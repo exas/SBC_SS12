@@ -18,6 +18,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import at.ac.sbc.carfactory.domain.CarPartType;
+import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.ui.util.View;
 
 
@@ -28,15 +30,22 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
 	private static final long serialVersionUID = 986427844864093227L;
 	private JTextArea loggerTextArea;
 	private ProducerPanel producerPanel;
-	//private ICarFactoryManager carFactoryManager;
+	
+	
+	
 	
 	private JMenuItem createProducer;
 	private JMenuItem closeApp;
 	private JMenuItem showStatistics;
+	
+	//Should be not in VIEW ? in controller ref.?
+	//carFactoryManager
+	private Model model;
 
 	// TODO: finish UI
 	
-	public CarFactoryUI() {
+	public CarFactoryUI(Model model) {
+		this.model = model;
 		//this.carFactoryManager = carFactoryManager;
 		this.setTitle("Car-Factory");
 		this.setSize(new Dimension(640, 480));
@@ -116,9 +125,9 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
 	}
 	
 
-//	public boolean assignWorkToProducer(long id, int numParts, CarPartEnum carPart) {
-//		return this.carFactoryManager.assignWorkToProducer(numParts, carPart, id);
-//	}
+	public boolean assignWorkToProducer(long id, int numParts, CarPartType carPartType) {
+		return this.model.assignWorkToProducer(numParts, carPartType, id);
+	}
 
 	@Override
 	public void logMessageAdded(String message) {
@@ -179,6 +188,11 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
 	@Override
 	public ProducerPanel getProducerPanel() {
 		return this.producerPanel;
+	}
+
+	@Override
+	public Model getModel() {
+		return model;
 	}
     
 }

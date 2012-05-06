@@ -13,7 +13,7 @@ public class CarFactory {
 
 		// TODO: start UI and initialize logic layer
 		Model model = new CarFactoryManager();
-		View view = new CarFactoryUI();
+		View view = new CarFactoryUI(model);
 		
 		@SuppressWarnings("unused")
 		Controller controller = new Controller(model,view);

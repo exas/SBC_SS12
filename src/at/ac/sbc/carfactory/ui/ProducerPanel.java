@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.EventListener;
 
 import javax.swing.JButton;
@@ -222,7 +221,7 @@ public class ProducerPanel extends JPanel {
 	
 	public void addCreateProducerBtListener(EventListener al) {
 		this.createProducerBt.addActionListener((ActionListener) al);
-		this.createProducerBt.addMouseListener((MouseListener) al);
+		//this.createProducerBt.addMouseListener((MouseListener) al);
     }
 	
 }
