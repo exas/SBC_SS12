@@ -2,10 +2,6 @@ package at.ac.sbc.carfactory.util;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-
-import javax.swing.JButton;
-import javax.swing.event.MouseInputListener;
 
 import org.apache.log4j.Logger;
 
@@ -77,7 +73,7 @@ public class Controller {
 	/** When ProducerPanel:createProducerBt is pressed.
 	* If there was an error, tell the View to display it.
 	*/
-	class CreateProducerBtListener implements ActionListener, MouseInputListener {
+	class CreateProducerBtListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			logger.debug("createProducer2 Action");
 			long id = model.createProducer();
@@ -90,32 +86,7 @@ public class Controller {
 			}
 		}
 
-		@Override
-		public void mouseClicked(MouseEvent e) {
-			JButton createProducer = (JButton)e.getSource();
-			if (createProducer != null) {
-				//Alex: Fires Action Event - Workaround since actionPerformed is not recognized?? for this button?
-				createProducer.doClick();
-			}
-		}
-
-		@Override
-		public void mouseEntered(MouseEvent e) {}
-
-		@Override
-		public void mouseExited(MouseEvent e) {}
-
-		@Override
-		public void mousePressed(MouseEvent e) {}
-
-		@Override
-		public void mouseReleased(MouseEvent e) {}
-
-		@Override
-		public void mouseDragged(MouseEvent e) {}
-
-		@Override
-		public void mouseMoved(MouseEvent e) {}
+		
 	}//end inner class ProducerPanel: CreateProducerBtListener
 	
 	

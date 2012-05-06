@@ -14,6 +14,7 @@
 
     <path id="project.classpath">
     	<fileset dir="${lib.dir}">
+    		<include name="*.jar"/>
     		<include name="${mzspaces.file}"/>
     		<include name="${log4j.file}"/>
     		<include name="${log4j.config.dir}"/>

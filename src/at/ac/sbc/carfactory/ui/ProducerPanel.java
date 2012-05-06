@@ -220,10 +220,6 @@ public class ProducerPanel extends JPanel {
 		this.tableModel.fireTableDataChanged();
 	}
 	
-	public CarFactoryUI getParent() {
-		return this.parent;
-	}
-	
 	public void addCreateProducerBtListener(EventListener al) {
 		this.createProducerBt.addActionListener((ActionListener) al);
 		this.createProducerBt.addMouseListener((MouseListener) al);
