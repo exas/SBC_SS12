@@ -11,7 +11,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 
-import at.ac.sbc.carfactory.domain.CarPartEnum;
+import at.ac.sbc.carfactory.domain.CarPartType;
 
 public class AssignWorkPanel extends JDialog {
 
@@ -30,7 +30,7 @@ public class AssignWorkPanel extends JDialog {
 		
 		JLabel producerLabel = new JLabel("Producer: " + this.producerID);
 
-		final JComboBox carPartList = new JComboBox(CarPartEnum.values());
+		final JComboBox carPartList = new JComboBox(CarPartType.values());
 		carPartList.setSelectedIndex(1);
 		
 		Integer[] array = {1,2,3,4,5,6,7,8,9};

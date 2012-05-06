@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mozartspacesCoreConfig>
+  <!-- Determines whether the core has an embedded space or is just a thin client -->
+  <embeddedSpace>true</embeddedSpace>
+  <remoting>
+    <transports>
+        <tcpsocket scheme="xvsm">
+            <receiverPort>9876</receiverPort>
+        </tcpsocket>
+    </transports>
+  </remoting>
+  <!-- Configuration of the Space URI, identifier and also locator of a space -->
+  <spaceURI>${remoting.defaultScheme}://localhost:${remoting.transports.tcpsocket.receiverPort}</spaceURI>
+  <!-- example above with variables, expanded to "xvsm://localhost:9876" --> 
+</mozartspacesCoreConfig>

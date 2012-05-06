@@ -2,23 +2,23 @@ package at.ac.sbc.carfactory.domain;
 
 public class WorkTask {
 	
-	private CarPartEnum carPart;
+	private CarPartType carPartType;
 	private int numParts;
 	
 	public WorkTask() {
 		
 	}
 	
-	public WorkTask(int numParts, CarPartEnum carPart) {
-		this.carPart = carPart;
+	public WorkTask(int numParts, CarPartType carPartType) {
+		this.carPartType = carPartType;
 		this.numParts = numParts;
 	}
 	
-	public CarPartEnum getCarPart() {
-		return carPart;
+	public CarPartType getCarPartTyp() {
+		return carPartType;
 	}
-	public void setCarPart(CarPartEnum carPart) {
-		this.carPart = carPart;
+	public void setCarPartTyp(CarPartType carPartType) {
+		this.carPartType = carPartType;
 	}
 	public int getNumParts() {
 		return numParts;

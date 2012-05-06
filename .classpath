@@ -5,5 +5,15 @@
 	<classpathentry kind="lib" path="lib/mozartspaces-dist-2.1-SNAPSHOT-r11986-all-with-dependencies.jar"/>
 	<classpathentry kind="con" path="build"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="lib/hornetq-jms-client.jar"/>
+	<classpathentry kind="lib" path="lib/jnp-client.jar"/>
+	<classpathentry kind="lib" path="lib/hornetq-core-client.jar"/>
+	<classpathentry kind="lib" path="lib/hornetq-core.jar"/>
+	<classpathentry kind="lib" path="lib/netty.jar"/>
+	<classpathentry kind="lib" path="lib/jboss-jms-api.jar"/>
+	<classpathentry kind="lib" path="lib/hornetq-jms.jar"/>
+	<classpathentry kind="lib" path="config/hornetq-jms"/>
+	<classpathentry kind="lib" path="config/log4j"/>
+	<classpathentry kind="lib" path="config/xvsm"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

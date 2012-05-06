@@ -1,4 +1,4 @@
-package at.ac.sbc.carfactory.application;
+package at.ac.sbc.carfactory.xvms.application;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -12,19 +12,21 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.notifications.Notification;
 import org.mozartspaces.notifications.NotificationListener;
 import org.mozartspaces.notifications.NotificationManager;
 import org.mozartspaces.notifications.Operation;
 
-import at.ac.sbc.carfactory.domain.CarPartEnum;
+import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.domain.WorkTask;
+import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.LogListener;
 import at.ac.sbc.carfactory.util.SpaceUtil;
+
+import org.apache.log4j.Logger;
 
 /**
  * class handles connection to space as well as storing information about the
@@ -33,7 +35,7 @@ import at.ac.sbc.carfactory.util.SpaceUtil;
  * @author spookyTU
  * 
  */
-public class CarFactoryManager implements ICarFactoryManager, NotificationListener {
+public class CarFactoryManager extends Model implements NotificationListener {
 
 	private static final int poolSize = 15;
 	private static final int maxPoolSize = 50;
@@ -46,6 +48,8 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 	private ArrayList<Notification> notifications;
 	private List<LogListener> logListeners;
 	private SpaceUtil space;
+	
+	private Logger logger = Logger.getLogger(CarFactoryManager.class);
 
 	public CarFactoryManager() {
 		this.threadPool = new ThreadPoolExecutor(CarFactoryManager.poolSize, CarFactoryManager.maxPoolSize,
@@ -55,6 +59,8 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		// ExecutorService executorService = Executors.newCachedThreadPool();
 		this.initSpace();
 		this.initNotificationManager();
+		
+		logger.debug("CarFactoryManager instantiated");
 		this.log("CarFactoryManager instantiated");
 	}
 
@@ -87,9 +93,10 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		}
 	}
 	
-	@Override
+	//@Override
 	public long createProducer() {
 		long id = this.idCounter;
+		logger.debug("CreateProducer called with id <"+id+">.");
 		Producer producer = null;
 		try {
 			producer = new Producer(id, (new Random()).nextInt(ConfigSettings.maxDelayWorkers));
@@ -101,11 +108,12 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		this.threadPool.execute(producer);
 		this.idCounter++;
 		this.log("Created Producer with ID: " + id);
+		logger.debug("Created Producer with ID<"+id+">.");
 		return id;
 	}
 
 	@Override
-	public long createProducer(int numParts, CarPartEnum carPart) {
+	public long createProducer(int numParts, CarPartType carPart) {
 		long id = this.createProducer();
 		if(id == -1) {
 			return id;
@@ -114,7 +122,7 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		return id;
 	}
 
-	@Override
+	//@Override
 	public boolean shutdownProducer(long id) {
 		if (this.producers.get(id) != null) {
 			this.producers.get(id).shutdown();
@@ -122,7 +130,7 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		return true;
 	}
 	
-	@Override
+	//@Override
 	public boolean shutdown() {
 		System.out.println("Number of Producers: " + this.producers.size());
 		Iterator<Long> it = this.producers.keySet().iterator();
@@ -139,8 +147,8 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		System.out.println("Notified: " + notif + " with operation: " + oper + " on:" + objs);
 	}
 
-	@Override
-	public boolean assignWorkToProducer(int numParts, CarPartEnum carPart, long producerID) {
+	//@Override
+	public boolean assignWorkToProducer(int numParts, CarPartType carPart, long producerID) {
 		Producer producer = this.producers.get(producerID);
 		if (producer == null) {
 			//TODO: notify gui
@@ -151,15 +159,15 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		return true;
 	}
 
-	@Override
+	//@Override
 	public boolean deleteProducer(long id) {
 		this.shutdownProducer(id);
 		return true;
 	}
 	
-	@Override
+	//@Override
 	public void log(String message) {
-		Logger.getLogger(CarFactoryManager.class.getName()).log(Level.INFO, message, message);
+		//Logger.getLogger(CarFactoryManager.class.getName()).log(Level.INFO, message, message);
 		if(this.logListeners != null) {
 			for (int i = 0; i < this.logListeners.size(); i++) {
 				this.logListeners.get(i).logMessageAdded(message);
@@ -167,7 +175,7 @@ public class CarFactoryManager implements ICarFactoryManager, NotificationListen
 		}
 	}
 
-	@Override
+	//@Override
 	public void addLogListener(LogListener listener) {
 		if(this.logListeners == null) {
 			this.logListeners = new ArrayList<LogListener>();

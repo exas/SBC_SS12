@@ -1,4 +1,4 @@
-package at.ac.sbc.carfactory.application;
+package at.ac.sbc.carfactory.xvms.application;
 
 import org.apache.log4j.Logger;
 
@@ -55,7 +55,7 @@ public class Producer implements Runnable {
 			while (task.getNumParts() > 0) {
 				Thread.sleep(delay);
 				// TODO: produce part
-				switch (task.getCarPart()) {
+				switch (task.getCarPartTyp()) {
 				case CAR_BODY:
 					// TODO: Produce CAR_BODY
 				case CAR_TIRE:

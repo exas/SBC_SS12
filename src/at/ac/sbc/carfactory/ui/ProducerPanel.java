@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.EventListener;
 
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
@@ -32,7 +34,11 @@ public class ProducerPanel extends JPanel {
 	private JTable table = null;
 	private DefaultTableModel tableModel;
 	private CarFactoryUI parent;
+	
+	private JButton createProducerBt;
 
+	
+	
 	public ProducerPanel(CarFactoryUI parent) {
 		this.parent = parent;
 		this.initialize();
@@ -58,13 +64,17 @@ public class ProducerPanel extends JPanel {
         c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 1.0; c.gridwidth = 1;
         this.add(tableScrollPane, c);
         
-        JButton createProducerBt = new JButton("Create Producer");
-        createProducerBt.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				ProducerPanel.this.parent.createProducer();
-			}
-		});
+        createProducerBt = new JButton("Create Producer!");
+        //Alex: added method addCreateProducerBtListener() so it is controlled by the Controller
+//        createProducerBt.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				@SuppressWarnings("unused")
+//				int a = 1;
+//				a = 2;
+//				
+//			}
+//		});
         
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.NONE; c.insets = new Insets(10,10,10,10);
@@ -187,6 +197,7 @@ public class ProducerPanel extends JPanel {
 		});
         JButton assignWorkBt = new JButton("assign work");
         assignWorkBt.setName(String.valueOf(id));
+        
         assignWorkBt.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -208,4 +219,14 @@ public class ProducerPanel extends JPanel {
 		//this.tableModel.removeRow(row)
 		this.tableModel.fireTableDataChanged();
 	}
+	
+	public CarFactoryUI getParent() {
+		return this.parent;
+	}
+	
+	public void addCreateProducerBtListener(EventListener al) {
+		this.createProducerBt.addActionListener((ActionListener) al);
+		this.createProducerBt.addMouseListener((MouseListener) al);
+    }
+	
 }

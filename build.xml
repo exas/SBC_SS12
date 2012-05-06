@@ -9,12 +9,14 @@
 	<property name="dist.dir" location="dist" />
 	<property name="mzspaces.file" value="mozartspaces-dist-2.1-SNAPSHOT-r11986-all-with-dependencies.jar" />
 	<property name="log4j.file" value="log4j-1.2.16.jar" />
+	<property name="config.dir" value="config" />
 	<property name="mzspaces.config.client" value="mozartspaces_client.xml" />
 
     <path id="project.classpath">
     	<fileset dir="${lib.dir}">
     		<include name="${mzspaces.file}"/>
     		<include name="${log4j.file}"/>
+    		<include name="${log4j.config.dir}"/>
     	</fileset>
         <pathelement location="${build.dir}"/>
     </path>
@@ -26,11 +28,13 @@
     <target name="compile" depends="init" description="compile the source " >
         <mkdir dir="${build.dir}"/>
         <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="project.classpath" debug="true" />
+    	<copy file="${config.dir}/log4j/log4j.properties" todir="${build.dir}"/>
     </target>
 	
     <target name="run-carFactoryManager" depends="compile" description="Car-Factory Manager App" >
-        <java classname="at.ac.sbc.carfactory.CarFactory" classpathref="project.classpath" fork="true" >
+        <java classname="at.ac.sbc.carfactory.xvms.CarFactory" classpathref="project.classpath" fork="true" >
         	<jvmarg value="-Dmozartspaces.configurationFile=${mzspaces.config.client}" />
+        	<!-- <jvmarg value="-Dlog4j.debug=true" /> -->
         </java>
     </target>
 

@@ -4,9 +4,9 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
+
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
+
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
@@ -18,15 +18,16 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import at.ac.sbc.carfactory.application.ICarFactoryManager;
+
+import at.ac.sbc.carfactory.ui.util.View;
 import at.ac.sbc.carfactory.util.LogListener;
 
-public class CarFactoryUI extends JFrame implements LogListener, WindowListener, ActionListener {
+public class CarFactoryUI extends View implements LogListener, WindowListener {
 
 	private static final long serialVersionUID = 986427844864093227L;
 	private JTextArea loggerTextArea;
 	private ProducerPanel producerPanel;
-	private ICarFactoryManager carFactoryManager;
+	//private ICarFactoryManager carFactoryManager;
 	
 	private JMenuItem createProducer;
 	private JMenuItem closeApp;
@@ -34,8 +35,8 @@ public class CarFactoryUI extends JFrame implements LogListener, WindowListener,
 
 	// TODO: finish UI
 	
-	public CarFactoryUI(ICarFactoryManager carFactoryManager) {
-		this.carFactoryManager = carFactoryManager;
+	public CarFactoryUI() {
+		//this.carFactoryManager = carFactoryManager;
 		this.setTitle("Car-Factory");
 		this.setSize(new Dimension(640, 480));
 		
@@ -47,10 +48,13 @@ public class CarFactoryUI extends JFrame implements LogListener, WindowListener,
 		this.setLayout(new GridBagLayout());
         this.setMinimumSize(new Dimension(640, 480));
 		this.setVisible(true);
+		
 		this.initalizeMenu();
 		this.initializeComponents();
+		
 		// just in case swing doesn't do it itself --> validate GUI so that it is shown correctly
 		this.validate();
+		
 	}
 	
 	private void initalizeMenu() {
@@ -59,13 +63,16 @@ public class CarFactoryUI extends JFrame implements LogListener, WindowListener,
 		JMenu fileMenu = new JMenu("File");		
 		
 		closeApp = new JMenuItem("Close App");
-		closeApp.addActionListener(this);
+		// Alex: outsourced to Controller Class to achieve MVC Pattern
+		//closeApp.addActionListener(this);
 		
 		createProducer = new JMenuItem("Create Producer");
-		createProducer.addActionListener(this);
+		// Alex: outsourced to Controller Class to achieve MVC Pattern
+		//createProducer.addActionListener(this);
 		
 		showStatistics = new JMenuItem("Show Statistics");
-		showStatistics.addActionListener(this);
+		// Alex: outsourced to Controller Class to achieve MVC Pattern
+		//showStatistics.addActionListener(this);
 		
 		fileMenu.add(createProducer);
 		fileMenu.add(showStatistics);
@@ -107,14 +114,7 @@ public class CarFactoryUI extends JFrame implements LogListener, WindowListener,
 		//this.loggerTextArea.repaint();
 	}
 	
-	public long createProducer() {
-		long id = this.carFactoryManager.createProducer();
-		// TODO: show confirmation dialog 
-		if(id != -1) {
-			this.producerPanel.addProducer(id);
-		}
-		return id;
-	}
+	
 
 	@Override
 	public void logMessageAdded(String message) {
@@ -147,20 +147,34 @@ public class CarFactoryUI extends JFrame implements LogListener, WindowListener,
 	@Override
 	public void windowOpened(WindowEvent e) { }
 
+	
+	public void addCreateProducerListener(ActionListener al) {
+		createProducer.addActionListener(al);
+    }
+	
+	public void addShowStatisticsListener(ActionListener al) {
+		showStatistics.addActionListener(al);
+    }
+	
+	public void addCloseAppListener(ActionListener al) {
+		closeApp.addActionListener(al);
+    }
+
 	@Override
-	public void actionPerformed(ActionEvent e) {
-		//check for source and then handle action for each menuItem
-		if (e.getSource() == createProducer)
-			CarFactoryUI.this.createProducer();
-		else if (e.getSource() == closeApp)
-			System.exit(0);
-		
-			//do stuff on closing app? but already covered with windowlistener closingWindow see above
-		//else if (e.getSource() == showStatistics)
-			//do stuff on showStatistics
+	public void closeView() {
+		//close App
+		System.exit(0);
+	}
+
+	@Override
+	public void updateProducerPanel(Long id) {
+		// TODO Auto-generated method stub
 		
 	}
-	
-	
-	
+
+	@Override
+	public ProducerPanel getProducerPanel() {
+		return this.producerPanel;
+	}
+    
 }
