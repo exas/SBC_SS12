@@ -27,16 +27,16 @@ import javax.jms.Session;
 public class Producer implements Runnable{
 
 	private long id;
-	private int numParts;
-	private CarPartType carPartType;
+	//private int numParts;
+	//private CarPartType carPartType;
 	int minWorkTime,maxWorkTime;
 	
 	private boolean running = true;
 	private SynchronousQueue<WorkTask> tasks;
 	
-	private ConnectionFactory cf =null;
-	private Connection connection = null;
-	private Session session = null;
+	private ConnectionFactory cf;
+	private Connection connection;
+	private Session session;
 	//TASK QUEUE
 	private Queue carPartQueue = null;
 
@@ -56,8 +56,8 @@ public class Producer implements Runnable{
 		
 		this.tasks = new SynchronousQueue<WorkTask>();
 		
-		cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
-		carPartQueue = (Queue) JMSServer.getInstance().lookup("/queue/carPartQueue");
+		this.cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
+		this.carPartQueue = (Queue) JMSServer.getInstance().lookup("/queue/carPartQueue");
 	}
 	
 	@Override
@@ -82,7 +82,7 @@ public class Producer implements Runnable{
 	}
 
 	public void produce(WorkTask task) {
-		logger.debug("Producer <"+this.id+">: Start producing <"+numParts+"> x <"+carPartType.toString()+">." );
+		logger.debug("Producer <"+this.id+">: Start producing <"+task.getNumParts()+"> x <"+task.getCarPartTyp().toString()+">." );
 		try {
 			
 			//create Connection for JMS Queue
@@ -136,7 +136,7 @@ public class Producer implements Runnable{
 					e.printStackTrace();
 				}
 			}
-		logger.debug("Producer <"+this.id+">: Finished producing <"+numParts+"> x <"+carPartType.toString()+">." );
+		logger.debug("Producer <"+this.id+">: Finished producing <"+task.getNumParts()+"> x <"+task.getCarPartTyp().toString()+">." );
 	}
 	
 	public void addWorkTask(WorkTask task) {

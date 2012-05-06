@@ -33,8 +33,6 @@ public class CarFactory {
 		
 		
 
-
-		JMSServer.getInstance().stop();
 			
 		
 	}

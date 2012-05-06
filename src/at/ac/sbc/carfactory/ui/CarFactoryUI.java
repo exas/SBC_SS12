@@ -30,10 +30,7 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
 	private static final long serialVersionUID = 986427844864093227L;
 	private JTextArea loggerTextArea;
 	private ProducerPanel producerPanel;
-	
-	
-	
-	
+
 	private JMenuItem createProducer;
 	private JMenuItem closeApp;
 	private JMenuItem showStatistics;

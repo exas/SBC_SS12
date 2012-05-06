@@ -64,7 +64,12 @@ public class Controller {
 	*/
 	class CloseAppListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			logger.debug("closeView Action");
+			
+			logger.debug("Stopping Embedded JMS Server");
+			//stop JMS Server
+			JMSServer.getInstance().stop();
+			
+			logger.debug("Closing View");
 			view.closeView();
 		}
 	}//end inner class CloseAppListener
