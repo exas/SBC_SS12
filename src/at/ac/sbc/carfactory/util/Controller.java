@@ -28,6 +28,7 @@ public class Controller {
 		this.view.addShowStatisticsListener(new ShowStatisticsListener());
 		
 		this.view.getProducerPanel().addCreateProducerBtListener(new CreateProducerBtListener());
+		
 	}
 	
 	//////////////////////////////////////////inner class CreateProducerListener
@@ -116,5 +117,19 @@ public class Controller {
 		@Override
 		public void mouseMoved(MouseEvent e) {}
 	}//end inner class ProducerPanel: CreateProducerBtListener
+	
+	
+//	assignWorkBt.addActionListener(new ActionListener() {
+//		@Override
+//		public void actionPerformed(ActionEvent e) {
+//			if (AssignWorkPanel.this.parent.assignWorkToProducer(AssignWorkPanel.this.producerID,
+//					(Integer) numPartList.getSelectedItem(), (CarPartType) carPartList.getSelectedItem()) == false) {
+//				// TODO : showDialog
+//			}
+//			else {
+//				AssignWorkPanel.this.dispose();
+//			}
+//		}
+//	});
 	
 }

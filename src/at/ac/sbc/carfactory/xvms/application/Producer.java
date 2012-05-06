@@ -3,11 +3,15 @@ package at.ac.sbc.carfactory.xvms.application;
 import org.apache.log4j.Logger;
 
 import at.ac.sbc.carfactory.domain.CarMotor;
+import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.WorkTask;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.SpaceUtil;
-import java.util.concurrent.SynchronousQueue;
+
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class Producer implements Runnable {
@@ -15,7 +19,7 @@ public class Producer implements Runnable {
 	private long id;
 	private int delay;
 	private boolean running = true;
-	private SynchronousQueue<WorkTask> tasks;
+	private BlockingQueue<CarPart> tasks;
 	private SpaceUtil space;
 	private Logger logger = Logger.getLogger(Producer.class);
 
@@ -30,7 +34,7 @@ public class Producer implements Runnable {
 	}
 
 	private void init() throws CarFactoryException {
-		this.tasks = new SynchronousQueue<WorkTask>();
+		this.tasks = new LinkedBlockingQueue<CarPart>();
 		this.space = new SpaceUtil();
 	}
 
@@ -38,16 +42,30 @@ public class Producer implements Runnable {
 	public void run() {
 		while (running == true) {
 			try {
-				WorkTask task = this.tasks.poll(1000, TimeUnit.MILLISECONDS);
+				CarPart task = this.tasks.poll(1000, TimeUnit.MILLISECONDS);
 				if(task != null) {
 					this.produce(task);
 				}
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+				this.logger.info(e.getMessage());
 				e.printStackTrace();
 			}
 		}
 		System.out.println("Producer finished");
+	}
+	
+	public void produce(CarPart carPart) {
+		try {
+			Thread.sleep(delay);
+			try {
+				this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerName), carPart);
+			} catch (CarFactoryException e) {
+				this.logger.info(e.getMessage());
+			}
+		} catch (InterruptedException e) {
+			this.logger.info(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	public void produce(WorkTask task) {
@@ -73,19 +91,25 @@ public class Producer implements Runnable {
 					// TODO: NOTHING
 				}
 				System.out.println("PRODUCED: with delay: " + delay);
-				
+				task.setNumParts(task.getNumParts() - 1);
 			}
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+			this.logger.info(e.getMessage());
 			e.printStackTrace();
 		}
 	}
-
-	public void addWorkTask(WorkTask task) {
+	
+	public void addProducerTasks(List<CarPart> carParts) {
+		for(CarPart carPart : carParts) {
+			this.addProducerTask(carPart);
+		}
+	}
+	
+	public void addProducerTask(CarPart carPart) {
 		try {
-			this.tasks.put(task);
+			this.tasks.put(carPart);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+			this.logger.info(e.getMessage());
 			e.printStackTrace();
 		}
 	}

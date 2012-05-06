@@ -18,8 +18,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-
 import at.ac.sbc.carfactory.ui.util.View;
+
+
 import at.ac.sbc.carfactory.util.LogListener;
 
 public class CarFactoryUI extends View implements LogListener, WindowListener {
@@ -114,7 +115,10 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
 		//this.loggerTextArea.repaint();
 	}
 	
-	
+
+//	public boolean assignWorkToProducer(long id, int numParts, CarPartEnum carPart) {
+//		return this.carFactoryManager.assignWorkToProducer(numParts, carPart, id);
+//	}
 
 	@Override
 	public void logMessageAdded(String message) {

@@ -176,7 +176,7 @@ public class ProducerPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				long producerID = (Long)table.getValueAt(rowIndex, 0);
-				new AssignWorkPanel(producerID);
+				new AssignWorkPanel(producerID, ProducerPanel.this.parent);
 			}
 		});
 		

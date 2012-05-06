@@ -11,16 +11,20 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import java.util.logging.Level;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.notifications.Notification;
 import org.mozartspaces.notifications.NotificationListener;
 import org.mozartspaces.notifications.NotificationManager;
 import org.mozartspaces.notifications.Operation;
 
+
 import at.ac.sbc.carfactory.domain.CarPartType;
-import at.ac.sbc.carfactory.domain.WorkTask;
 import at.ac.sbc.carfactory.ui.util.Model;
+
+import at.ac.sbc.carfactory.domain.CarBody;
+import at.ac.sbc.carfactory.domain.CarMotor;
+import at.ac.sbc.carfactory.domain.CarPart;
+import at.ac.sbc.carfactory.domain.CarTire;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.ConfigSettings;
 import at.ac.sbc.carfactory.util.LogListener;
@@ -44,6 +48,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 	private ThreadPoolExecutor threadPool;
 	private Map<Long, Producer> producers;
 	private Long idCounter;
+	private Long carPartID;
 	private NotificationManager notifManager;
 	private ArrayList<Notification> notifications;
 	private List<LogListener> logListeners;
@@ -56,6 +61,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 				CarFactoryManager.keepAliveTime, TimeUnit.SECONDS, queue);
 		this.producers = new HashMap<Long, Producer>();
 		this.idCounter = 1L;
+		this.carPartID = 1L;
 		// ExecutorService executorService = Executors.newCachedThreadPool();
 		this.initSpace();
 		this.initNotificationManager();
@@ -147,16 +153,38 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		System.out.println("Notified: " + notif + " with operation: " + oper + " on:" + objs);
 	}
 
-	//@Override
-	public boolean assignWorkToProducer(int numParts, CarPartType carPart, long producerID) {
+	@Override
+	public boolean assignWorkToProducer(int numParts, CarPartType carPartType, long producerID) {
+
 		Producer producer = this.producers.get(producerID);
 		if (producer == null) {
 			//TODO: notify gui
 			this.log("AssignWorkError: Could not find producer with id " + producerID);
 			return false;
 		}
-		producer.addWorkTask(new WorkTask(numParts, carPart));
+		producer.addProducerTasks(this.createCarParts(numParts, carPartType));
 		return true;
+	}
+	
+	private List<CarPart> createCarParts(int numParts, CarPartType carPartType) {
+		List<CarPart> carParts = new ArrayList<CarPart>();
+		for(int i = numParts; i > 0; i--) {
+			CarPart carPart = null;
+			switch (carPartType) {
+				case CAR_BODY:
+					carPart = new CarBody();
+				case CAR_TIRE:
+					carPart = new CarTire();
+				case CAR_MOTOR:
+					carPart = new CarMotor();
+				default:
+					// TODO: NOTHING
+			}
+			carPart.setId(this.carPartID);
+			carParts.add(carPart);
+			this.carPartID++;
+		}
+		return carParts;
 	}
 
 	//@Override
