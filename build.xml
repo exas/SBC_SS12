@@ -38,7 +38,7 @@
         	<jvmarg value="-Dmozartspaces.configurationFile=${mzspaces.config.client}" />
         	<!-- <jvmarg value="-Dlog4j.debug=true" /> -->
         </java>
-    </target>
+    </target> 
 
     <target name="run-space-server" depends="compile" description="MozartspacesServer" >
         <java classname="org.mozartspaces.core.Server" classpathref="project.classpath" fork="true">
