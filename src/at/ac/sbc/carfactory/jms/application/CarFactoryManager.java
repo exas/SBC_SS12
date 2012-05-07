@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.domain.WorkTask;
 import at.ac.sbc.carfactory.jms.application.Producer;
+import at.ac.sbc.carfactory.jms.server.JobManagementListener;
 import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 
@@ -26,6 +27,8 @@ public class CarFactoryManager extends Model {
 	private static final int poolSize = 15;
 	private static final int maxPoolSize = 50;
 	private static final long keepAliveTime = 10;
+	private final JobManagementListener jobManagementListener = new JobManagementListener();
+	
 	private final ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(poolSize);
 	private ThreadPoolExecutor threadPool;
 	private Map<Long, Producer> producers;
@@ -41,6 +44,7 @@ public class CarFactoryManager extends Model {
 		this.logger.debug("CarFactoryManager instantiated");
 	}
 	
+	@Override
 	public long createProducer() {
 		long id = this.idCounter;
 		Producer producer = null;
@@ -58,6 +62,7 @@ public class CarFactoryManager extends Model {
 		return id;
 	}
 
+	@Override
 	public long createProducer(int numParts, CarPartType carPartType) {
 		long id = this.createProducer();
 		if(id == -1) {
@@ -67,6 +72,7 @@ public class CarFactoryManager extends Model {
 		return id;
 	}
 	
+	@Override
 	public boolean shutdownProducer(long id) {
 		if (this.producers.get(id) != null) {
 			this.producers.get(id).shutdown();
@@ -74,6 +80,7 @@ public class CarFactoryManager extends Model {
 		return true;
 	}
 	
+	@Override
 	public boolean shutdown() {
 		System.out.println("Number of Producers: " + this.producers.size());
 		Iterator<Long> it = this.producers.keySet().iterator();
@@ -83,6 +90,7 @@ public class CarFactoryManager extends Model {
 		return true;
 	}
 	
+	@Override
 	public boolean assignWorkToProducer(int numParts, CarPartType carPart, long producerID) {
 		Producer producer = this.producers.get(producerID);
 		if (producer == null) {
@@ -93,7 +101,8 @@ public class CarFactoryManager extends Model {
 		producer.addWorkTask(new WorkTask(numParts, carPart));
 		return true;
 	}
-
+	
+	@Override
 	public boolean deleteProducer(long id) {
 		this.shutdownProducer(id);
 		return true;

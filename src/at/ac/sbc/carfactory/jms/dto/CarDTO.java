@@ -1,5 +1,10 @@
 package at.ac.sbc.carfactory.jms.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import at.ac.sbc.carfactory.domain.CarTire;
+
 //Data Transfer Object, just a simple class which holds all relevant data for transfering this object via Messaging/Queues.
 
 public class CarDTO implements java.io.Serializable{
@@ -15,10 +20,11 @@ public class CarDTO implements java.io.Serializable{
 	private Long carBodyId;
 	private Long carMotorId;
 	
-	private Long carTireId_1;
-	private Long carTireId_2;
-	private Long carTireId_3;
-	private Long carTireId_4;
+	private List<Long> carTireIds;
+	
+	public CarDTO() {
+		
+	}
 	
 	public Long getId() {
 		return id;
@@ -76,36 +82,13 @@ public class CarDTO implements java.io.Serializable{
 		this.carMotorId = carMotorId;
 	}
 
-	public Long getCarTireId_1() {
-		return carTireId_1;
+	public List<Long> getCarTireIds() {
+		return carTireIds;
 	}
 
-	public void setCarTireId_1(Long carTireId_1) {
-		this.carTireId_1 = carTireId_1;
+	public void setCarTireIds(List<Long> carTireIds) {
+		this.carTireIds = carTireIds;
 	}
-
-	public Long getCarTireId_2() {
-		return carTireId_2;
-	}
-
-	public void setCarTireId_2(Long carTireId_2) {
-		this.carTireId_2 = carTireId_2;
-	}
-
-	public Long getCarTireId_3() {
-		return carTireId_3;
-	}
-
-	public void setCarTireId_3(Long carTireId_3) {
-		this.carTireId_3 = carTireId_3;
-	}
-
-	public Long getCarTireId_4() {
-		return carTireId_4;
-	}
-
-	public void setCarTireId_4(Long carTireId_4) {
-		this.carTireId_4 = carTireId_4;
-	}
+	
 	
 }

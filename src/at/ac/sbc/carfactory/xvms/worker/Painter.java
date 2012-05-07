@@ -1,4 +1,4 @@
-package at.ac.sbc.carfactory.worker;
+package at.ac.sbc.carfactory.xvms.worker;
 
 import java.io.Serializable;
 import java.util.ArrayList;

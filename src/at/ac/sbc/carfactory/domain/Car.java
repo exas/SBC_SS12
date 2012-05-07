@@ -7,6 +7,11 @@ public class Car implements Serializable {
 
 	private static final long serialVersionUID = -5463318055982788409L;
 	private long id;
+	
+	private Long assemblyWorkerId;
+	private Long painterWorkerId;
+	private Long logisticWorkerId;
+	
 	private CarBody body;
 	private CarMotor motor;
 	private List<CarTire> tires;
@@ -19,6 +24,14 @@ public class Car implements Serializable {
 		this.body = body;
 		this.motor = motor;
 		this.tires = tires;
+	}
+	
+	public Car(Long assemblyWorkerId, CarBody body, CarMotor motor, List<CarTire> tires) {
+		super();
+		this.body = body;
+		this.motor = motor;
+		this.tires = tires;
+		this.assemblyWorkerId = assemblyWorkerId;
 	}
 	
 	public long getId() {
@@ -51,5 +64,29 @@ public class Car implements Serializable {
 
 	public void setTires(List<CarTire> tires) {
 		this.tires = tires;
+	}
+
+	public Long getAssemblyWorkerId() {
+		return assemblyWorkerId;
+	}
+
+	public void setAssemblyWorkerId(Long assemblyWorkerId) {
+		this.assemblyWorkerId = assemblyWorkerId;
+	}
+
+	public Long getPainterWorkerId() {
+		return painterWorkerId;
+	}
+
+	public void setPainterWorkerId(Long painterWorkerId) {
+		this.painterWorkerId = painterWorkerId;
+	}
+
+	public Long getLogisticWorkerId() {
+		return logisticWorkerId;
+	}
+
+	public void setLogisticWorkerId(Long logisticWorkerId) {
+		this.logisticWorkerId = logisticWorkerId;
 	}
 }

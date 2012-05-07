@@ -11,6 +11,7 @@ public class JMSServer {
 	
 	private JMSServer() {
 		jms = new EmbeddedJMS();
+		
 	}
 	
 	public synchronized static JMSServer getInstance() {

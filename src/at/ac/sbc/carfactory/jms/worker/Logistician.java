@@ -1,4 +1,4 @@
-package at.ac.sbc.carfactory.worker;
+package at.ac.sbc.carfactory.jms.worker;
 
 public class Logistician extends Worker {
 

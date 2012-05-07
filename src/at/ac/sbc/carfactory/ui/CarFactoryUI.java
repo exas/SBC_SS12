@@ -157,15 +157,19 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
 	@Override
 	public void windowOpened(WindowEvent e) { }
 
-	
+	@Override
 	public void addCreateProducerListener(ActionListener al) {
 		createProducer.addActionListener(al);
     }
 	
+	
+	@Override
 	public void addShowStatisticsListener(ActionListener al) {
 		showStatistics.addActionListener(al);
     }
 	
+	
+	@Override
 	public void addCloseAppListener(ActionListener al) {
 		closeApp.addActionListener(al);
     }

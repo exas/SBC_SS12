@@ -110,10 +110,12 @@ public class ProducerPanel extends JPanel {
 					}
 				}
 	
+				@Override
 				public void mousePressed(MouseEvent e) {
 					maybeShowPopup(e);
 				}
 
+				@Override
 				public void mouseReleased(MouseEvent e) {
 					maybeShowPopup(e);
 				}
@@ -123,6 +125,8 @@ public class ProducerPanel extends JPanel {
 		this.table.getTableHeader().setDefaultRenderer(
 				new DefaultTableCellRenderer() {
 					private static final long serialVersionUID = -79265426L;
+					
+					@Override
 					public Component getTableCellRendererComponent(
 							 	JTable table, Object value, boolean isSelected,
 							 	boolean hasFocus, int row, int column) {

@@ -1,9 +1,6 @@
 package at.ac.sbc.carfactory.jms.application;
 
 import org.apache.log4j.Logger;
-
-
-import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.domain.WorkTask;
 
 import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
@@ -109,6 +106,7 @@ public class Producer implements Runnable{
 				MessageProducer producer = session.createProducer(carPartQueue);
 				
             	outObjectMessage = session.createObjectMessage(carPartDTO);
+            	outObjectMessage.setStringProperty("type", "newProducedCarPart");
             	
             	//outObjectMessage.setStringProperty("type", "carPartType?");
             	
