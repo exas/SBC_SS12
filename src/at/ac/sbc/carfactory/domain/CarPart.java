@@ -5,8 +5,10 @@ import java.io.Serializable;
 public abstract class CarPart implements Serializable {
 
 	private static final long serialVersionUID = 6513813391956502127L;
+	
 	protected long id;
 	protected Long producerId;
+
 	private CarPartType carPartType;
 	private Long carId;
 	

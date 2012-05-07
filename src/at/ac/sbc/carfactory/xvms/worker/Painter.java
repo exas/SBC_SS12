@@ -59,6 +59,7 @@ public class Painter extends Worker {
 				System.out.println(elems.get(0).toString());
 			}
 		} catch (CarFactoryException ex) {
+			ex.printStackTrace();
 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
 			try {
 				this.space.rollbackTransaction(tx);
