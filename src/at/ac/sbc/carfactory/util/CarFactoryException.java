@@ -1,4 +1,4 @@
-package at.ac.sbc.carfactory.xvms.util;
+package at.ac.sbc.carfactory.util;
 
 public class CarFactoryException extends Exception {
 

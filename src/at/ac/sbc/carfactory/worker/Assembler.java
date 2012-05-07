@@ -12,7 +12,7 @@ import at.ac.sbc.carfactory.domain.Car;
 import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarMotor;
 import at.ac.sbc.carfactory.domain.CarTire;
-import at.ac.sbc.carfactory.xvms.util.CarFactoryException;
+import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
 import at.ac.sbc.carfactory.xvms.util.CoordinatorType;
 import at.ac.sbc.carfactory.xvms.util.SpaceUtil;

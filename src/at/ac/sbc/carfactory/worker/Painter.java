@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import org.mozartspaces.core.TransactionReference;
 
 import at.ac.sbc.carfactory.domain.CarColor;
-import at.ac.sbc.carfactory.xvms.util.CarFactoryException;
+import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
 import at.ac.sbc.carfactory.xvms.util.CoordinatorType;
 import at.ac.sbc.carfactory.xvms.util.SpaceUtil;

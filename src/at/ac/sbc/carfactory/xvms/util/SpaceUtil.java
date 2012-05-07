@@ -24,6 +24,7 @@ import org.mozartspaces.core.TransactionReference;
 
 import at.ac.sbc.carfactory.domain.Car;
 import at.ac.sbc.carfactory.domain.CarPart;
+import at.ac.sbc.carfactory.util.CarFactoryException;
 
 public class SpaceUtil {
 

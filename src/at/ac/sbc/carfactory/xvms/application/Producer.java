@@ -3,7 +3,7 @@ package at.ac.sbc.carfactory.xvms.application;
 import org.apache.log4j.Logger;
 
 import at.ac.sbc.carfactory.domain.CarPart;
-import at.ac.sbc.carfactory.xvms.util.CarFactoryException;
+import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
 import at.ac.sbc.carfactory.xvms.util.SpaceUtil;
 import at.ac.sbc.carfactory.xvms.util.WorkTaskLabel;
