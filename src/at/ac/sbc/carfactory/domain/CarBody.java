@@ -3,6 +3,7 @@ package at.ac.sbc.carfactory.domain;
 public class CarBody extends CarPart {
 
 	private static final long serialVersionUID = 5596880421243550656L;
+	private long paintedById;
 	private CarColor color;
 
 	@Override
@@ -23,5 +24,13 @@ public class CarBody extends CarPart {
 
 	public void setColor(CarColor color) {
 		this.color = color;
+	}
+	
+	public long getPaintedById() {
+		return paintedById;
+	}
+
+	public void setPaintedById(long paintedById) {
+		this.paintedById = paintedById;
 	}
 }

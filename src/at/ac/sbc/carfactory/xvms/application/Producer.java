@@ -72,7 +72,7 @@ public class Producer implements Runnable {
 						// DO NOTHING
 				}
 						
-				this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), carPart, label);
+				this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), carPart, label);
 			} catch (CarFactoryException e) {
 				this.logger.info(e.getMessage());
 			}

@@ -74,7 +74,7 @@ public class Assembler extends Worker {
 				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), car, tx);
 			}
 			else {
-				this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), car, WorkTaskLabel.CAR);
+				this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), car, WorkTaskLabel.CAR);
 			}
 			this.space.commitTransaction(tx);
 			System.out.println("DONE WRITING CAR");

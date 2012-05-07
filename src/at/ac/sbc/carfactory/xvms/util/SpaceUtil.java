@@ -94,7 +94,7 @@ public class SpaceUtil {
 		return container;
 	}
 
-	public void writeCarPartEntry(ContainerReference cRef, Serializable obj, WorkTaskLabel label)
+	public void writeLabelEntry(ContainerReference cRef, Serializable obj, WorkTaskLabel label)
 					throws CarFactoryException {
 		try {
 			capi.write(cRef, 0, null,
@@ -148,7 +148,7 @@ public class SpaceUtil {
 		try {
 			System.out.println(selectors);
 			long timeout = 0;
-			if(once == true) {
+			if(once == false) {
 				timeout = RequestTimeout.INFINITE;
 			}
 			else {
@@ -156,7 +156,7 @@ public class SpaceUtil {
 			}
 			return capi.take(cRef, selectors, timeout, tx);
 		} catch (MzsCoreException e) {
-			throw new CarFactoryException("Could not write to container " + cRef.getStringRepresentation() + "\n"
+			throw new CarFactoryException("Could not read from container " + cRef.getStringRepresentation() + "\n"
 							+ e.getMessage());
 		}
 	}

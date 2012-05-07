@@ -7,6 +7,8 @@ public class Car implements Serializable {
 
 	private static final long serialVersionUID = -5463318055982788409L;
 	private long id;
+	private long assembledById;
+	private long logisticianId;
 	private CarBody body;
 	private CarMotor motor;
 	private List<CarTire> tires;
@@ -27,6 +29,22 @@ public class Car implements Serializable {
 
 	public void setId(long id) {
 		this.id = id;
+	}
+	
+	public long getAssembledById() {
+		return assembledById;
+	}
+
+	public void setAssembledById(long assembledById) {
+		this.assembledById = assembledById;
+	}
+	
+	public long getLogisticianId() {
+		return logisticianId;
+	}
+
+	public void setLogisticianId(long logisticianId) {
+		this.logisticianId = logisticianId;
 	}
 	
 	public CarBody getBody() {
