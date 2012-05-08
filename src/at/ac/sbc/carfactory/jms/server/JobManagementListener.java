@@ -28,6 +28,7 @@ import at.ac.sbc.carfactory.jms.dto.CarDTO;
 import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
 import at.ac.sbc.carfactory.util.JMSServer;
 
+
 public class JobManagementListener implements MessageListener {
 
     private ConnectionFactory cf;
@@ -59,6 +60,7 @@ public class JobManagementListener implements MessageListener {
             
             messageConsumer = session.createConsumer(carPartQueue);
     		messageConsumer.setMessageListener(this);
+    		connection.start();
             //topicConnFactory = 
             //producer = session.createProducer(topic);
         } catch (Throwable t) {
@@ -85,7 +87,8 @@ public class JobManagementListener implements MessageListener {
         CarPartDTO carPartDTO = null;
 
         try {
-        	
+        	session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            
         	producerAssemblingJob = session.createProducer(assemblingJobQueue);
         	producerPainterJob = session.createProducer(painterJobQueue);
         	
@@ -97,12 +100,18 @@ public class JobManagementListener implements MessageListener {
 	            	
 	    			if(inMessage.getStringProperty("type").equals("updateCarBodyByPainter")) {
 	    				//Painter sent this message to the Queue
-	    				
+	    				logger.debug("<"+this.hashCode()+">: Received Msg from Painter (painted Body).");
+            			
 	    				if(carPartDTO.getId() != null) {
+	    					
 	    					CarBody carBody = CarPartDaoSimpleImpl.getInstance().getCarBodyById(carPartDTO.getId());
 	    					carBody.setId(new Long(carPartDTO.getId()));
 	    					carBody.setPainterWorkerId(carPartDTO.getPainterId());
 	    					carBody.setColor(carPartDTO.getBodyColor());
+	    					
+	    					logger.debug("CarBody:<"+carBody.getId()+">, Producer:<"+carBody.getProducerId()+">");
+	    					logger.debug("PainterWorkerId:<"+carBody.getPainterWorkerId()+">");
+	    					logger.debug("Color:<"+carBody.getColor()+">");
 	    					
 	    					//delete from used part Carts and add to FreeCarBody List
 	    					CarPartDaoSimpleImpl.getInstance().deleteCarBodyById(carBody.getId());
@@ -118,25 +127,25 @@ public class JobManagementListener implements MessageListener {
 		            		
 		            		switch(carPartDTO.getCarPartType()) {
 			            		case CAR_BODY:
-			            			logger.debug("JobManagementListener<"+this.toString()+">: creating CarBody");
+			            			logger.debug("<"+this.hashCode()+">: creating CarBody for in-memory-DB");
 			            			CarBody carBody = null;
 			            			carBody = new CarBody(carPartDTO.getId(), carPartDTO.getProducerId());
 			            			CarPartDaoSimpleImpl.getInstance().saveFreeCarBody(carBody);
-			            			logger.debug("JobManagementListener<"+this.toString()+">: saved CarBody");
+			            			logger.debug("<"+this.hashCode()+">: saved CarBody in in-memory-DB");
 			            			break;
 			            		case CAR_MOTOR:
-			            			logger.debug("JobManagementListener<"+this.toString()+">: creating CarMotor");
+			            			logger.debug("<"+this.hashCode()+">: creating CarMotor in-memory-DB");
 			            			CarMotor carMotor = null;
 			            			carMotor = new CarMotor(carPartDTO.getId(), carPartDTO.getProducerId());
 			            			CarPartDaoSimpleImpl.getInstance().saveFreeCarMotor(carMotor);
-			            			logger.debug("JobManagementListener<"+this.toString()+">: saved CarMotor");
+			            			logger.debug("<"+this.hashCode()+">: saved CarMotor in-memory-DB");
 			            			break;
 			            		case CAR_TIRE:
-			            			logger.debug("JobManagementListener<"+this.toString()+">: creating CarTire");
+			            			logger.debug("<"+this.hashCode()+">: creating CarTire in-memory-DB");
 			            			CarTire carTire = null;
 			            			carTire = new CarTire(carPartDTO.getId(), carPartDTO.getProducerId());
 			            			CarPartDaoSimpleImpl.getInstance().saveFreeCarTire(carTire);
-			            			logger.debug("JobManagementListener<"+this.toString()+">: saved CarTire");
+			            			logger.debug("<"+this.hashCode()+">: saved CarTire in-memory-DB");
 			            			break;
 			            		default: 
 			            			break;
@@ -149,7 +158,9 @@ public class JobManagementListener implements MessageListener {
 		            		
 		            		if(carBody != null && carMotor != null && carTires.size() == 4) {
 		            			//assemble is possible
-		            			
+		            			logger.debug("<"+this.hashCode()+">: AssembleJob is possible (Body,Motor,4xTire reserved).");
+		            			logger.debug("CarBody:<"+carBody.getId()+">, Producer:<"+carBody.getProducerId()+">");
+		            			logger.debug("CarMotor:<"+carMotor.getId()+">, Producer:<"+carMotor.getProducerId()+">");
 		            			//save back to in-memory-DB but not in free LIST, into used List
 		            			CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
 		            			CarPartDaoSimpleImpl.getInstance().saveCarMotor(carMotor);
@@ -158,6 +169,7 @@ public class JobManagementListener implements MessageListener {
 		            			List<Long> carTireIds = new ArrayList<Long>();
 		            			
 		            			for(CarTire carTire: carTires) {
+		            				logger.debug("CarTire:<"+carTire.getId()+">, Producer:<"+carTire.getProducerId()+">");
 		            				carTireIds.add(carTire.getId());
 		            				CarPartDaoSimpleImpl.getInstance().saveCarTire(carTire);
 		            			}
@@ -173,8 +185,9 @@ public class JobManagementListener implements MessageListener {
 		            			outObjectMessage = session.createObjectMessage(carDTO);
 		            			producerAssemblingJob.send(outObjectMessage);
 
-		            		} else if (carBody != null) {
+		            		} else if (carBody != null && carBody.isPainted() == false) {
 		            			//PainterJob for single Body is available
+		            			logger.debug("<"+this.hashCode()+">: PainterJob is possible (CarBody<"+carBody.getId()+"> reserved).");
 		            			
 		            			//save back to in-memory-DB but not in free LIST, into used CarPart List
 		            			CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
@@ -198,6 +211,22 @@ public class JobManagementListener implements MessageListener {
 		            			outObjectMessage = session.createObjectMessage(carBodyDTO);
 		            			producerPainterJob.send(outObjectMessage);
 		            			
+		            			logger.debug("JobManagementListener<"+this.toString()+">: PainterJob with CarBody<"+carBodyDTO.getId()+"> is send out to QUEUE");
+		            			
+		            		} else {
+		            			//save back to in-memory-DB in free LIST since no match and give up reserved ones!
+		            		
+		            			if(carBody != null) {
+		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarBody(carBody);
+		            			}
+		            			//save Motor and Tires into Free list since not USED for PainterJob Creation!
+		            			if(carMotor != null) {
+		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarMotor(carMotor);
+		            			}
+		            			
+		            			for(CarTire carTire: carTires) {
+		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarTire(carTire);
+		            			}
 		            		}
 		            	}
 		            }
@@ -211,7 +240,7 @@ public class JobManagementListener implements MessageListener {
             te.printStackTrace();
         }
 	}
-        	
+    
 	 /**
      * Closes the connection.
      */

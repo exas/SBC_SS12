@@ -161,10 +161,10 @@ public class CarPartDaoSimpleImpl {
 	public void deleteFreeCarTireById(final Long id) { freeCarTires.remove(id); }
 	
 	public synchronized List<CarTire> getNextFreeCarTireSetAndRemove() {
-		if (freeCarTires.isEmpty())
-			return null;
-		
 		List<CarTire> carTireSet = new ArrayList<CarTire>();
+		
+		if (freeCarTires.isEmpty())
+			return carTireSet; //return EMPTY LIST if nothing in it.
 		
 		for(Map.Entry<Long, CarTire> e : freeCarTires.entrySet()) {
 			carTireSet.add(e.getValue());

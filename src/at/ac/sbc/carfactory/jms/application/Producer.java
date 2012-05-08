@@ -23,7 +23,7 @@ import javax.jms.Session;
 
 public class Producer implements Runnable{
 
-	private long id;
+	private Long id;
 	//private int numParts;
 	//private CarPartType carPartType;
 	int minWorkTime,maxWorkTime;
@@ -79,7 +79,7 @@ public class Producer implements Runnable{
 	}
 
 	public void produce(WorkTask task) {
-		logger.debug("Producer <"+this.id+">: Start producing <"+task.getNumParts()+"> x <"+task.getCarPartTyp().toString()+">." );
+		logger.debug("Producer <"+this.id+">: Start producing "+task.getNumParts()+" x <"+task.getCarPartTyp().toString()+">.");
 		try {
 			
 			//create Connection for JMS Queue
@@ -99,17 +99,29 @@ public class Producer implements Runnable{
 				//Create Data Transfer Object for Queue
 				CarPartDTO carPartDTO = new CarPartDTO();
 				carPartDTO.setCarPartType(task.getCarPartTyp());
+				carPartDTO.setProducerId(this.id);
+				
+				carPartDTO.setId(task.getCarPartId());
+				
+				logger.debug("Producer <"+this.id+">: Producing "+task.getCarPartTyp().toString()+" <"+carPartDTO.getId()+">.");
+				
+				//check if more than 1 part is created and if not last iteration is reached
+				//then generate new CarPartId and set this in task since taskId = carPartId
+				if(task.getNumParts() >= 1 && (i+1) < task.getNumParts() ) {
+					task.setCarPartId(task.generateNextCarPartId());
+				}
 				
 				ObjectMessage outObjectMessage = null;
 				
 				//  Create a JMS Message Producer to send a message on the queue
 				MessageProducer producer = session.createProducer(carPartQueue);
 				
-            	outObjectMessage = session.createObjectMessage(carPartDTO);
+            	outObjectMessage = session.createObjectMessage();
+            	outObjectMessage.setObject(carPartDTO);
             	outObjectMessage.setStringProperty("type", "newProducedCarPart");
             	
             	//outObjectMessage.setStringProperty("type", "carPartType?");
-            	
+            	logger.debug("Producer <"+this.id+">: Finished producing <"+task.getCarPartTyp().toString()+">. Send Message to CarPartQueue." );
 				//send it using the producer
 				producer.send(outObjectMessage);
 
@@ -134,7 +146,7 @@ public class Producer implements Runnable{
 					e.printStackTrace();
 				}
 			}
-		logger.debug("Producer <"+this.id+">: Finished producing <"+task.getNumParts()+"> x <"+task.getCarPartTyp().toString()+">." );
+		
 	}
 	
 	public void addWorkTask(WorkTask task) {
@@ -150,11 +162,11 @@ public class Producer implements Runnable{
 		this.running = false;
 	}
 
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

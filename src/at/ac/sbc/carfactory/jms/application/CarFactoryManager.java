@@ -91,14 +91,14 @@ public class CarFactoryManager extends Model {
 	}
 	
 	@Override
-	public boolean assignWorkToProducer(int numParts, CarPartType carPart, long producerID) {
+	public boolean assignWorkToProducer(int numParts, CarPartType carPartType, long producerID) {
 		Producer producer = this.producers.get(producerID);
 		if (producer == null) {
 			//TODO: notify gui
 			this.logger.debug("AssignWorkError: Could not find producer with id " + producerID);
 			return false;
 		}
-		producer.addWorkTask(new WorkTask(numParts, carPart));
+		producer.addWorkTask(new WorkTask(numParts, carPartType));
 		return true;
 	}
 	
