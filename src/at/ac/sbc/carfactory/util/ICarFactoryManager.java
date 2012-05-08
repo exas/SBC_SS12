@@ -16,7 +16,9 @@ public interface ICarFactoryManager {
 	
 	public boolean shutdown();
 	
-	//public void log(String message);
+	public void log(String message);
 	
-	//public void addLogListener(LogListener listener);
+	public void addLogListener(LogListener listener);
+	
+	public void addDomainListener(DomainListener listener);
 }

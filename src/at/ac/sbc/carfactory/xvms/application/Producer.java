@@ -23,11 +23,13 @@ public class Producer implements Runnable {
 	private Logger logger = Logger.getLogger(Producer.class);
 
 	public Producer(long id) throws CarFactoryException {
+		this.id = id;
 		this.delay = ConfigSettings.maxDelayWorkers;
 		this.init();
 	}
 
 	public Producer(long id, int delay) throws CarFactoryException {
+		this.id = id;
 		this.delay = delay;
 		this.init();
 	}
@@ -71,7 +73,7 @@ public class Producer implements Runnable {
 					default:
 						// DO NOTHING
 				}
-						
+				carPart.setProducerId(this.id);
 				this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), carPart, label);
 			} catch (CarFactoryException e) {
 				this.logger.info(e.getMessage());

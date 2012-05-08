@@ -11,6 +11,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.mozartspaces.core.Entry;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.notifications.Notification;
 import org.mozartspaces.notifications.NotificationListener;
@@ -21,14 +22,15 @@ import org.mozartspaces.notifications.Operation;
 import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.ui.util.Model;
 
+import at.ac.sbc.carfactory.domain.Car;
 import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarMotor;
 import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.CarTire;
 import at.ac.sbc.carfactory.util.CarFactoryException;
+import at.ac.sbc.carfactory.util.DomainListener;
 import at.ac.sbc.carfactory.util.LogListener;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
-import at.ac.sbc.carfactory.xvms.util.CoordinatorType;
 import at.ac.sbc.carfactory.xvms.util.SpaceUtil;
 
 import org.apache.log4j.Logger;
@@ -53,6 +55,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 	private NotificationManager notifManager;
 	private ArrayList<Notification> notifications;
 	private List<LogListener> logListeners;
+	private List<DomainListener> domainListeners;
 	private SpaceUtil space;
 	
 	private Logger logger = Logger.getLogger(CarFactoryManager.class);
@@ -77,9 +80,6 @@ public class CarFactoryManager extends Model implements NotificationListener {
 	private void initSpace() {
 		try {
 			this.space = new SpaceUtil();
-			if(this.space.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
-				this.space.createContainer(ConfigSettings.containerCarPartsName, CoordinatorType.LABEL);
-			}
 		} catch (CarFactoryException ex) {
 			this.log(ex.getMessage());
 		}
@@ -91,6 +91,8 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		try {
 			this.notifications.add(notifManager.createNotification(
 					this.space.lookupContainer(ConfigSettings.containerCarPartsName), this, Operation.WRITE, null, null));
+			this.notifications.add(notifManager.createNotification(
+					this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), this, Operation.WRITE, null, null));
 		} catch (MzsCoreException e) {
 			this.log(e.getMessage());
 		} catch (CarFactoryException e) {
@@ -152,6 +154,22 @@ public class CarFactoryManager extends Model implements NotificationListener {
 	@Override
 	public void entryOperationFinished(Notification notif, Operation oper, List<? extends Serializable> objs) {
 		System.out.println("Notified: " + notif + " with operation: " + oper + " on:" + objs);
+		this.updatedDomainObjects(((Entry)objs.get(0)).getValue());
+	}
+	
+	private void updatedDomainObjects(Serializable obj) {
+		if(this.domainListeners == null || this.domainListeners.size() == 0) {
+			return;
+		}
+		for (int i = 0; i < this.domainListeners.size(); i++) {
+			if (obj instanceof CarPart) {
+				this.domainListeners.get(i).carPartUpdated((CarPart)obj);
+			}
+			else {
+				this.domainListeners.get(i).carUpdated((Car)obj);
+			
+			}
+		}
 	}
 
 	@Override
@@ -204,7 +222,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		return true;
 	}
 	
-	//@Override
+	@Override
 	public void log(String message) {
 		//Logger.getLogger(CarFactoryManager.class.getName()).log(Level.INFO, message, message);
 		if(this.logListeners != null) {
@@ -214,7 +232,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		}
 	}
 
-	//@Override
+	@Override
 	public void addLogListener(LogListener listener) {
 		if(this.logListeners == null) {
 			this.logListeners = new ArrayList<LogListener>();
@@ -222,4 +240,11 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		this.logListeners.add(listener);
 	}
 
+	@Override
+	public void addDomainListener(DomainListener listener) {
+		if(this.domainListeners == null) {
+			this.domainListeners = new ArrayList<DomainListener>();
+		}
+		this.domainListeners.add(listener);
+	}
 }
