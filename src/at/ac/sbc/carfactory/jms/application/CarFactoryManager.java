@@ -16,6 +16,8 @@ import at.ac.sbc.carfactory.jms.application.Producer;
 import at.ac.sbc.carfactory.jms.server.JobManagementListener;
 import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.util.CarFactoryException;
+import at.ac.sbc.carfactory.util.DomainListener;
+import at.ac.sbc.carfactory.util.LogListener;
 
 /**
  * 
@@ -108,6 +110,17 @@ public class CarFactoryManager extends Model {
 		return true;
 	}
 
+	@Override
+	public void log(String message) {
+	}
 
+	@Override
+	public void addLogListener(LogListener listener) {
+	}
+
+	@Override
+	public void addDomainListener(DomainListener listener) {
+		
+	}
 
 }
