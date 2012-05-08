@@ -16,20 +16,26 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
+import at.ac.sbc.carfactory.domain.Car;
+import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.ui.util.View;
 
 
+import at.ac.sbc.carfactory.util.DomainListener;
 import at.ac.sbc.carfactory.util.LogListener;
 
-public class CarFactoryUI extends View implements LogListener, WindowListener {
+public class CarFactoryUI extends View implements DomainListener, LogListener, WindowListener {
 
 	private static final long serialVersionUID = 986427844864093227L;
 	private JTextArea loggerTextArea;
 	private ProducerPanel producerPanel;
+	private StatisticCarPartsPanel statisticCarPartsPanel;
+	private StatisticCarsPanel statisticCarsPanel;
 
 	private JMenuItem createProducer;
 	private JMenuItem closeApp;
@@ -94,7 +100,15 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
         // position elements
 		GridBagConstraints c = new GridBagConstraints();
 
+		JTabbedPane tabbedPane = new JTabbedPane();
+		
 		this.producerPanel = new ProducerPanel(this);
+		this.statisticCarPartsPanel = new StatisticCarPartsPanel(this);
+		this.statisticCarsPanel = new StatisticCarsPanel(this);
+		tabbedPane.add("Producers", this.producerPanel);
+		tabbedPane.add("Statistics Car-Parts", this.statisticCarPartsPanel);
+		tabbedPane.add("Statistics Cars", this.statisticCarsPanel);
+		
 		
 		this.loggerTextArea = new JTextArea();
 		this.loggerTextArea.setEditable(false);
@@ -103,7 +117,7 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.BOTH; c.insets = new Insets(10,10,10,10);
         c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 0.75; c.gridwidth = 1;
-        this.add(this.producerPanel, c);
+        this.add(tabbedPane, c);
         c.gridx = 0; c.gridy = 1; c.weightx = 1; c.weighty = 0.25;
         this.add(textAreaScrollPane, c);
 	}
@@ -194,6 +208,16 @@ public class CarFactoryUI extends View implements LogListener, WindowListener {
 	@Override
 	public Model getModel() {
 		return model;
+	}
+
+	@Override
+	public void carPartUpdated(CarPart part) {
+		this.statisticCarPartsPanel.carPartUpdate(part);
+	}
+
+	@Override
+	public void carUpdated(Car car) {
+		this.statisticCarsPanel.carUpdate(car);
 	}
     
 }

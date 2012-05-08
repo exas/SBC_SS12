@@ -33,10 +33,7 @@ public class ProducerPanel extends JPanel {
 	private JTable table = null;
 	private DefaultTableModel tableModel;
 	private CarFactoryUI parent;
-	
 	private JButton createProducerBt;
-
-	
 	
 	public ProducerPanel(CarFactoryUI parent) {
 		this.parent = parent;
