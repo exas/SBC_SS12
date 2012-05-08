@@ -9,6 +9,8 @@ import java.util.logging.Logger;
 
 import org.mozartspaces.core.TransactionReference;
 
+import at.ac.sbc.carfactory.domain.Car;
+import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarColor;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
@@ -32,12 +34,6 @@ public class Painter extends Worker {
 	private void initSpace() {
 		try {
 			this.space = new SpaceUtil();
-			if(this.space.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
-				this.space.createContainer(ConfigSettings.containerCarPartsName, CoordinatorType.LABEL);
-			}
-			if(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName) == null) {
-				this.space.createContainer(ConfigSettings.containerFinishedCarsName, CoordinatorType.FIFO);
-			}
 		} catch (CarFactoryException ex) {
 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
 		}
@@ -53,10 +49,26 @@ public class Painter extends Worker {
 			return;
 		}
 		try {
-			ArrayList<Serializable> elems = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, labels, 1, tx, false);
+			this.labels = Arrays.asList(WorkTaskLabel.CAR);
+			ArrayList<Serializable> elems = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, labels, 1, tx, true);
 			System.out.println("GOT SOMETHING: " + elems);
 			if(elems != null && elems.size() > 0) {
-				System.out.println(elems.get(0).toString());
+				Car car = (Car)elems.get(0);
+				car.getBody().setPainterWorkerId(this.getId());
+				car.getBody().setColor(this.color);
+				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), car, tx);
+				this.space.commitTransaction(tx);
+			}
+			else {
+				this.labels = Arrays.asList(WorkTaskLabel.CAR_BODY);
+				elems = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, labels, 1, tx, true);
+				if(elems != null && elems.size() > 0) {
+					CarBody body = (CarBody)elems.get(0);
+					body.setPainterWorkerId(this.getId());
+					body.setColor(this.color);
+					this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), body, WorkTaskLabel.CAR_BODY_PAINTED);
+					this.space.commitTransaction(tx);
+				}
 			}
 		} catch (CarFactoryException ex) {
 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
@@ -102,6 +114,12 @@ public class Painter extends Worker {
 		 Painter painter = new Painter(id, color);
 		 while(true) {
 			 painter.processCarBody();
+			 try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		 }
 	}
 

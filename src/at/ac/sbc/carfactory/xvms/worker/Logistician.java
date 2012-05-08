@@ -20,20 +20,10 @@ public class Logistician extends Worker {
 
 	public Logistician(long id) {
 		super(id);
-		this.initSpace();
-	}
-	
-	private void initSpace() {
 		try {
 			this.space = new SpaceUtil();
-			if(this.space.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
-				this.space.createContainer(ConfigSettings.containerCarPartsName, CoordinatorType.LABEL);
-			}
-			if(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName) == null) {
-				this.space.createContainer(ConfigSettings.containerFinishedCarsName, CoordinatorType.FIFO);
-			}
-		} catch (CarFactoryException ex) {
-			Logger.getLogger(Logistician.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
+		} catch (CarFactoryException e) {
+			Logger.getLogger(Logistician.class.getName()).log(Level.SEVERE, "CarFactoryException", e.getMessage());
 		}
 	}
 	

@@ -51,7 +51,15 @@ public class Assembler extends Worker {
 			return;
 		}
 		try {
-			ArrayList<Serializable> bodyE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR, WorkTaskLabel.CAR_BODY), 1, tx, false);
+			ArrayList<Serializable> bodyE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_BODY_PAINTED), 1, tx, true);
+			if((bodyE == null || bodyE.size() == 0)) {
+				System.out.println("TRYING SECOND");
+				bodyE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_BODY), 1, tx, true);
+				if((bodyE == null || bodyE.size() == 0)) {
+					this.space.rollbackTransaction(tx);
+					return;
+				}
+			}
 			ArrayList<Serializable> motorE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_MOTOR), 1, tx, true);
 			ArrayList<Serializable> tiresE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_TIRE), 4, tx, true);
 			
@@ -69,12 +77,14 @@ public class Assembler extends Worker {
 				tires.add((CarTire)tire);
 			}
 			Car car = new Car(body, motor, tires);
+			car.setId(body.getId());
+			car.setAssemblyWorkerId(this.getId());
 			
 			if (car.getBody().isPainted() == true) {
 				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), car, tx);
 			}
 			else {
-				this.space.writeCarPartEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), car, WorkTaskLabel.CAR);
+				this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), car, WorkTaskLabel.CAR);
 			}
 			this.space.commitTransaction(tx);
 			System.out.println("DONE WRITING CAR");
@@ -106,7 +116,13 @@ public class Assembler extends Worker {
 		 Assembler assembler = new Assembler(id);
 		 while(true) {
 			assembler.buildCar();
-			break;
+			try {
+				System.out.println("SLEEPING");
+				Thread.sleep(15000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		 }
 	}
 

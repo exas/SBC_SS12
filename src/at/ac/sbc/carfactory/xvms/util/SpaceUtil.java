@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.mozartspaces.capi3.Coordinator;
@@ -23,7 +22,6 @@ import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.core.TransactionReference;
 
 import at.ac.sbc.carfactory.domain.Car;
-import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 
 public class SpaceUtil {
@@ -41,6 +39,7 @@ public class SpaceUtil {
 			throw new CarFactoryException("URI-Syntax error: " + e.getMessage());
 		}
 		this.init();
+		this.initContainers();
 	}
 
 	/*
@@ -53,6 +52,15 @@ public class SpaceUtil {
 
 	public MzsCore getMozartSpaceCore() {
 		return this.core;
+	}
+	
+	public void initContainers() throws CarFactoryException {
+		if(this.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
+			this.createContainer(ConfigSettings.containerCarPartsName, CoordinatorType.LABEL);
+		}
+		if(this.lookupContainer(ConfigSettings.containerFinishedCarsName) == null) {
+			this.createContainer(ConfigSettings.containerFinishedCarsName, CoordinatorType.FIFO);
+		}
 	}
 
 	public ContainerReference createContainer(String name, CoordinatorType coord) throws CarFactoryException {
@@ -141,12 +149,18 @@ public class SpaceUtil {
 			break;
 		case FIFO:
 			selectors.add(FifoCoordinator.newSelector());
+			break;
 		default:
 			selectors = null;
 			break;
 		}
 		try {
-			System.out.println(selectors);
+			/* DEBUG
+			 * if (selectors != null) {
+				for (int i = 0; i < selectors.size(); i++) {
+					System.out.println("We got selector: " + selectors.get(i).getName());
+				}
+			}*/
 			long timeout = 0;
 			if(once == false) {
 				timeout = RequestTimeout.INFINITE;
@@ -156,8 +170,10 @@ public class SpaceUtil {
 			}
 			return capi.take(cRef, selectors, timeout, tx);
 		} catch (MzsCoreException e) {
-			throw new CarFactoryException("Could not read from container " + cRef.getStringRepresentation() + "\n"
-							+ e.getMessage());
+			//System.out.println("Could not read from container " + cRef.getStringRepresentation() + "\n" + e.getMessage());
+			return null;
+			//throw new CarFactoryException("Could not read from container " + cRef.getStringRepresentation() + "\n"
+			//				+ e.getMessage());
 		}
 	}
 	
@@ -191,9 +207,9 @@ public class SpaceUtil {
 		System.out.println(this.core);
 	}
 
-	public void writeCarPartEntry(ContainerReference lookupContainer, Car car,
+	/*public void writeCarPartEntry(ContainerReference lookupContainer, Car car,
 			WorkTaskLabel car2) {
 		// TODO Auto-generated method stub
 		
-	}
+	}*/
 }
