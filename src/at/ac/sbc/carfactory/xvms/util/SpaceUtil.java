@@ -63,18 +63,23 @@ public class SpaceUtil {
 		}
 	}
 
-	public ContainerReference createContainer(String name, CoordinatorType coord) throws CarFactoryException {
+	public ContainerReference createContainer(String name, CoordinatorType... coordTypes) throws CarFactoryException {
 		// create a container
 		List<Coordinator> coords = new ArrayList<Coordinator>();
-		switch (coord) {
-		case LABEL:
-			coords.add(new LabelCoordinator());
-			break;
-		case FIFO:
-			coords.add(new FifoCoordinator());
-			break;
-		default:
-			// DO NOTHING
+		for (int i = 0; i < coordTypes.length; i++) {
+			switch (coordTypes[i]) {
+			case LABEL:
+				coords.add(new LabelCoordinator());
+				break;
+			case FIFO:
+				coords.add(new FifoCoordinator());
+				break;
+			case QUERY:
+				coords.add(new FifoCoordinator());
+				break;
+			default:
+				// DO NOTHING
+			}
 		}
 		for(Coordinator coordNew : coords) {
 			System.out.println(coordNew);
