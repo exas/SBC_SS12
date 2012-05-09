@@ -39,6 +39,55 @@ public class Painter extends Worker {
 		}
 	}
 	
+	/* public void paintCar() {
+		 List<Matchmaker> matchmakers = new ArrayList<Matchmaker>();
+         Matchmaker[] array = new Matchmaker[2];
+         Property prop = Property.forName("*", "paintState");
+         matchmakers.add(prop.equalTo(PaintState.PAINTED));    
+         matchmakers.add(prop.equalTo(PaintState.UNPAINTED));  
+         Query query = new Query().filter(Matchmakers.and((Matchmakers.or(matchmakers.toArray(array))),   Property.forName("type").equalTo(CarPartType.BODY)));
+         
+         TransactionReference tx;
+ 		try {
+ 			tx = this.space.createTransaction();
+ 		} catch (CarFactoryException ex) {
+ 			// COULD NOT CREATE TRANSACTION:
+ 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
+ 			return;
+ 		}
+ 		try {
+ 			this.labels = Arrays.asList(WorkTaskLabel.CAR);
+ 			ArrayList<Serializable> elems = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, labels, 1, tx, true);
+ 			System.out.println("GOT SOMETHING: " + elems);
+ 			if(elems != null && elems.size() > 0) {
+ 				Car car = (Car)elems.get(0);
+ 				car.getBody().setPainterWorkerId(this.getId());
+ 				car.getBody().setColor(this.color);
+ 				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), car, tx);
+ 				this.space.commitTransaction(tx);
+ 			}
+ 			else {
+ 				this.labels = Arrays.asList(WorkTaskLabel.CAR_BODY);
+ 				elems = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, labels, 1, tx, true);
+ 				if(elems != null && elems.size() > 0) {
+ 					CarBody body = (CarBody)elems.get(0);
+ 					body.setPainterWorkerId(this.getId());
+ 					body.setColor(this.color);
+ 					this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), body, WorkTaskLabel.CAR_BODY_PAINTED);
+ 					this.space.commitTransaction(tx);
+ 				}
+ 			}
+ 		} catch (CarFactoryException ex) {
+ 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
+ 			try {
+ 				this.space.rollbackTransaction(tx);
+ 			} catch (CarFactoryException e) {
+ 				Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
+ 				e.printStackTrace();
+ 			}
+ 		}
+	} */
+	
 	public void processCarBody() {
 		TransactionReference tx;
 		try {
