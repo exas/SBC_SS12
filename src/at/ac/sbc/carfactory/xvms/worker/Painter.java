@@ -7,11 +7,16 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.mozartspaces.capi3.Matchmakers;
+import org.mozartspaces.capi3.Property;
+import org.mozartspaces.capi3.Query;
 import org.mozartspaces.core.TransactionReference;
 
 import at.ac.sbc.carfactory.domain.Car;
 import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarColor;
+import at.ac.sbc.carfactory.domain.CarPart;
+import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
 import at.ac.sbc.carfactory.xvms.util.CoordinatorType;
@@ -39,15 +44,9 @@ public class Painter extends Worker {
 		}
 	}
 	
-	/* public void paintCar() {
-		 List<Matchmaker> matchmakers = new ArrayList<Matchmaker>();
-         Matchmaker[] array = new Matchmaker[2];
-         Property prop = Property.forName("*", "paintState");
-         matchmakers.add(prop.equalTo(PaintState.PAINTED));    
-         matchmakers.add(prop.equalTo(PaintState.UNPAINTED));  
-         Query query = new Query().filter(Matchmakers.and((Matchmakers.or(matchmakers.toArray(array))),   Property.forName("type").equalTo(CarPartType.BODY)));
-         
-         TransactionReference tx;
+	public void paintCar() {
+		Query query = new Query().filter(Matchmakers.and((Matchmakers.or(Property.forName("type").equalTo(CarPartType.CAR), Property.forName("type").equalTo(CarPartType.CAR_BODY))), Property.forName("painted").equalTo(null)));
+		TransactionReference tx;
  		try {
  			tx = this.space.createTransaction();
  		} catch (CarFactoryException ex) {
@@ -57,25 +56,24 @@ public class Painter extends Worker {
  		}
  		try {
  			this.labels = Arrays.asList(WorkTaskLabel.CAR);
- 			ArrayList<Serializable> elems = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, labels, 1, tx, true);
+ 			ArrayList<Serializable> elems = this.space.readQueryEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), query, tx, false);
  			System.out.println("GOT SOMETHING: " + elems);
  			if(elems != null && elems.size() > 0) {
- 				Car car = (Car)elems.get(0);
- 				car.getBody().setPainterWorkerId(this.getId());
- 				car.getBody().setColor(this.color);
- 				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), car, tx);
- 				this.space.commitTransaction(tx);
- 			}
- 			else {
- 				this.labels = Arrays.asList(WorkTaskLabel.CAR_BODY);
- 				elems = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, labels, 1, tx, true);
- 				if(elems != null && elems.size() > 0) {
- 					CarBody body = (CarBody)elems.get(0);
- 					body.setPainterWorkerId(this.getId());
- 					body.setColor(this.color);
- 					this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), body, WorkTaskLabel.CAR_BODY_PAINTED);
- 					this.space.commitTransaction(tx);
+ 				Serializable obj = null;
+ 				if (elems.get(0) instanceof CarPart) {
+ 					obj = (CarBody)elems.get(0);
+ 					((CarBody)obj).setPainterWorkerId(this.getId());
+ 					((CarBody)obj).setColor(this.color);
+ 					//this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), body, WorkTaskLabel.CAR_BODY_PAINTED);
+ 					this.space.writeEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), obj, tx, Arrays.asList(CoordinatorType.LABEL, CoordinatorType.QUERY), null, WorkTaskLabel.CAR_BODY_PAINTED);
  				}
+ 				else {
+ 					obj = (Car)elems.get(0);
+ 	 				((Car)obj).getBody().setPainterWorkerId(this.getId());
+ 	 				((Car)obj).getBody().setColor(this.color);
+ 	 				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), (Car)obj, tx);
+ 				}
+ 				this.space.commitTransaction(tx);
  			}
  		} catch (CarFactoryException ex) {
  			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
@@ -86,7 +84,7 @@ public class Painter extends Worker {
  				e.printStackTrace();
  			}
  		}
-	} */
+	}
 	
 	public void processCarBody() {
 		TransactionReference tx;
@@ -162,13 +160,14 @@ public class Painter extends Worker {
 		 
 		 Painter painter = new Painter(id, color);
 		 while(true) {
-			 painter.processCarBody();
-			 try {
+			 painter.paintCar();
+			/* painter.processCarBody();
+			try {
 				Thread.sleep(10000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 		 }
 	}
 
