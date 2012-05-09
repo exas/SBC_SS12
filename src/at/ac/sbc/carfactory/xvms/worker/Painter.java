@@ -73,6 +73,12 @@ public class Painter extends Worker {
  	 				((Car)obj).getBody().setColor(this.color);
  	 				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), (Car)obj, tx);
  				}
+ 				if (obj instanceof CarPart) {
+ 					System.out.println("Painte " + this.getId() + " painted CarBody " + ((CarBody)obj).getId() + " with color " + this.color);
+ 				}
+ 				else {
+ 					System.out.println("Painte " + this.getId() + " painted Car " + ((Car)obj).getId() + " with color " + this.color);
+ 				}
  				this.space.commitTransaction(tx);
  			}
  		} catch (CarFactoryException ex) {
@@ -83,6 +89,9 @@ public class Painter extends Worker {
  				Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
  				e.printStackTrace();
  			}
+ 		} catch (Exception ex) {
+ 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "Exception", ex.getMessage());
+			System.exit(-1);
  		}
 	}
 	

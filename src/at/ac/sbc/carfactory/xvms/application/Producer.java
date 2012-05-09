@@ -3,11 +3,14 @@ package at.ac.sbc.carfactory.xvms.application;
 import org.apache.log4j.Logger;
 
 import at.ac.sbc.carfactory.domain.CarPart;
+import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
+import at.ac.sbc.carfactory.xvms.util.CoordinatorType;
 import at.ac.sbc.carfactory.xvms.util.SpaceUtil;
 import at.ac.sbc.carfactory.xvms.util.WorkTaskLabel;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -74,7 +77,12 @@ public class Producer implements Runnable {
 						// DO NOTHING
 				}
 				carPart.setProducerId(this.id);
-				this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), carPart, label);
+				if(carPart.getCarPartType().equals(CarPartType.CAR_BODY)) {
+					this.space.writeEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), carPart, null, Arrays.asList(CoordinatorType.LABEL, CoordinatorType.QUERY), null, WorkTaskLabel.CAR_BODY);
+				}
+				else {
+					this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), carPart, label);
+				}
 			} catch (CarFactoryException e) {
 				this.logger.info(e.getMessage());
 			}

@@ -26,6 +26,8 @@ public class Car implements Serializable {
 
 	public Car() {
 		this.carPartType = CarPartType.CAR;
+		this.painterWorkerId = null;
+		this.logisticWorkerId = null;
 	}
 	
 	public Car(CarBody body, CarMotor motor, List<CarTire> tires) {
@@ -34,6 +36,8 @@ public class Car implements Serializable {
 		this.body = body;
 		this.motor = motor;
 		this.tires = tires;
+		this.painterWorkerId = null;
+		this.logisticWorkerId = null;
 	}
 	
 	public Car(Long assemblyWorkerId, CarBody body, CarMotor motor, List<CarTire> tires) {

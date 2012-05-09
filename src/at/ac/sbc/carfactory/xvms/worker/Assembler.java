@@ -14,6 +14,7 @@ import org.mozartspaces.core.TransactionReference;
 import at.ac.sbc.carfactory.domain.Car;
 import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarMotor;
+import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.domain.CarTire;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
@@ -33,12 +34,6 @@ public class Assembler extends Worker {
 	private void initSpace() {
 		try {
 			this.space = new SpaceUtil();
-			if(this.space.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
-				this.space.createContainer(ConfigSettings.containerCarPartsName, CoordinatorType.LABEL);
-			}
-			if(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName) == null) {
-				this.space.createContainer(ConfigSettings.containerFinishedCarsName, CoordinatorType.FIFO);
-			}
 		} catch (CarFactoryException ex) {
 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
 		}
@@ -54,9 +49,10 @@ public class Assembler extends Worker {
 			return;
 		}
 		
-		Query query = new Query().filter(Matchmakers.or(Property.forName("painted").notEqualTo(null), Property.forName("painted").equalTo(null)));
+		Query query = new Query().filter(Matchmakers.and(Matchmakers.or(Property.forName("painted").notEqualTo(null), Property.forName("painted").equalTo(null)), Property.forName("type").equalTo(CarPartType.CAR_BODY)));
 		try {
 			ArrayList<Serializable> bodyE = this.space.readQueryEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), query, tx, false);
+			System.out.println("GOT BODY!!!");
 			ArrayList<Serializable> motorE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_MOTOR), 1, tx, true);
 			ArrayList<Serializable> tiresE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_TIRE), 4, tx, true);
 			
@@ -84,7 +80,7 @@ public class Assembler extends Worker {
 				this.space.writeEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), car, tx, Arrays.asList(CoordinatorType.LABEL, CoordinatorType.QUERY), null, WorkTaskLabel.CAR);
 			}
 			this.space.commitTransaction(tx);
-			System.out.println("DONE WRITING CAR");
+			System.out.println("Assembler " + this.getId() + " assembled car " + car.getId() + "[Body: " + car.getBody().getId() + ", Motor: " + car.getMotor().getId() + ", Tires: " + car.getTires() + "]");
 		} catch (CarFactoryException ex) {
 			ex.printStackTrace();
 			Logger.getLogger(Assembler.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
@@ -94,7 +90,10 @@ public class Assembler extends Worker {
 				Logger.getLogger(Assembler.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
 				e.printStackTrace();
 			}
-		}
+		} catch (Exception ex) {
+ 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "Exception", ex.getMessage());
+			System.exit(-1);
+ 		}
 	}
 	
 	public void buildCar() {
@@ -124,7 +123,6 @@ public class Assembler extends Worker {
 				this.space.rollbackTransaction(tx);
 				return;
 			}
-			System.out.println("BEFORE CREATING CAR");
 			CarBody body = (CarBody)bodyE.get(0);
 			CarMotor motor = (CarMotor)motorE.get(0);
 			
@@ -172,14 +170,14 @@ public class Assembler extends Worker {
 		 Assembler assembler = new Assembler(id);
 		 while(true) {
 			 assembler.buildCarQuery();
-			/*assembler.buildCar();
+			//assembler.buildCar(); 
 			try {
 				System.out.println("SLEEPING");
 				Thread.sleep(15000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}*/
+			}
 		 }
 	}
 

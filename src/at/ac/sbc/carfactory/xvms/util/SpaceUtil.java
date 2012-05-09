@@ -61,7 +61,7 @@ public class SpaceUtil {
 	public void initContainers() throws CarFactoryException {
 		if (this.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
 			this.createContainer(ConfigSettings.containerCarPartsName,
-					CoordinatorType.LABEL);
+					CoordinatorType.LABEL, CoordinatorType.QUERY);
 		}
 		if (this.lookupContainer(ConfigSettings.containerFinishedCarsName) == null) {
 			this.createContainer(ConfigSettings.containerFinishedCarsName,
@@ -82,7 +82,7 @@ public class SpaceUtil {
 				coords.add(new FifoCoordinator());
 				break;
 			case QUERY:
-				coords.add(new FifoCoordinator());
+				coords.add(new QueryCoordinator());
 				break;
 			default:
 				// DO NOTHING
@@ -210,8 +210,8 @@ public class SpaceUtil {
 			}
 			return capi.take(cRef, selectors, timeout, tx);
 		} catch (MzsCoreException e) {
-			// System.out.println("Could not read from container " +
-			// cRef.getStringRepresentation() + "\n" + e.getMessage());
+			 System.out.println("Could not read from container " +
+			 cRef.getStringRepresentation() + "\n" + e.getMessage());
 			return null;
 			// throw new CarFactoryException("Could not read from container " +
 			// cRef.getStringRepresentation() + "\n"

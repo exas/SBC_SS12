@@ -14,7 +14,7 @@ public abstract class CarPart implements Serializable {
 	protected Long producerId;
 
 	@Index(label="type")
-	private CarPartType carPartType;
+	protected CarPartType carPartType;
 	private Long carId;
 	
 	private boolean isFree;
