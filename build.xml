@@ -56,6 +56,12 @@
 	        </java>
 	 </target>
 	
+	<target name="run-jms-Server" depends="compile" description="Start Embedded JMS Server" >
+		        <java classname="at.ac.sbc.carfactory.jms.server.JMSServer" classpathref="project.classpath" fork="true" >
+		        </java>
+	</target>
+	
+	
 	<target name="create-domain-jar">
         <mkdir dir="${dist.dir}"/>
         <jar destfile="${dist.dir}/carFactoryDomain.jar">

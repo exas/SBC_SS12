@@ -41,14 +41,6 @@
          <entry name="/ThroughputConnectionFactory"/>
       </entries>
    </connection-factory>
-
-   <queue name="DLQ">
-      <entry name="/queue/DLQ"/>
-   </queue>
-
-   <queue name="test">
-      <entry name="/queue/test"/>
-   </queue>
    
    <queue name="carPartQueue">
       <entry name="/queue/carPartQueue"/>

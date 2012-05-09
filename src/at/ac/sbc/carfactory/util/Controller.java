@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 
 import org.apache.log4j.Logger;
 
+import at.ac.sbc.carfactory.jms.server.JMSServer;
 import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.ui.util.View;
 
@@ -67,10 +68,6 @@ public class Controller {
 	class CloseAppListener implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			
-			logger.debug("Stopping Embedded JMS Server");
-			//stop JMS Server
-			JMSServer.getInstance().stop();
 			
 			logger.debug("Closing View");
 			view.closeView();

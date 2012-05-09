@@ -1,10 +1,14 @@
 package at.ac.sbc.carfactory.jms.worker;
 
 
+import java.util.Hashtable;
+import java.util.Scanner;
+
 import org.apache.log4j.Logger;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
@@ -13,16 +17,15 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.Session;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 
 import at.ac.sbc.carfactory.domain.CarColor;
 import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.jms.dto.CarDTO;
 import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
 
-import at.ac.sbc.carfactory.util.JMSServer;
-
-
-public class Painter extends Worker implements MessageListener {
+public class Painter extends Worker implements MessageListener, ExceptionListener {
 	
 	private CarColor color;
 
@@ -34,8 +37,7 @@ public class Painter extends Worker implements MessageListener {
 	private Queue carPartQueue;
 	private MessageConsumer messageConsumer;
 	
-	
-	private final static Logger logger = Logger.getLogger(Assembler.class);
+	private final static Logger logger = Logger.getLogger(Painter.class);
 	
 	public Painter(long id, CarColor color) {
 		super(id);
@@ -45,12 +47,17 @@ public class Painter extends Worker implements MessageListener {
 		
 	public void setup() {
         try {
-        	
+        	Hashtable<String, String> env = new Hashtable<String, String>();
+            env.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
+            env.put("java.naming.provider.url", "jnp://localhost:1099");
+            env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
+            Context context = new InitialContext(env);
+            
+    		this.cf = (ConnectionFactory)context.lookup("/cf");
         	//TODO connect to server do not create a new Server Instance!
-        	this.cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
-    		this.assembledCarQueue = (Queue) JMSServer.getInstance().lookup("/queue/assembledCarQueue");
-    		this.painterJobQueue = (Queue) JMSServer.getInstance().lookup("/queue/painterJobQueue");
-    		this.carPartQueue = (Queue) JMSServer.getInstance().lookup("/queue/carPartQueue");
+    		this.assembledCarQueue = (Queue) context.lookup("/queue/assembledCarQueue");
+    		this.painterJobQueue = (Queue) context.lookup("/queue/painterJobQueue");
+    		this.carPartQueue = (Queue) context.lookup("/queue/carPartQueue");
             
             connection = cf.createConnection();
             
@@ -80,12 +87,12 @@ public class Painter extends Worker implements MessageListener {
 		
 		ObjectMessage inObjectMessage = null;
     	ObjectMessage outObjectMessage = null;
-    	Session session = null;
+    	//Session session = null;
         MessageProducer producerAssembledCar = null;
         MessageProducer producerCarPart = null;
         
         try {
-        	session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        	//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             
         	producerAssembledCar = session.createProducer(assembledCarQueue);
         	producerCarPart = session.createProducer(carPartQueue);
@@ -181,7 +188,17 @@ public class Painter extends Worker implements MessageListener {
 		 
 		@SuppressWarnings("unused")
 		Painter painter = new Painter(id, color);
+		
+		logger.info("Enter 'quit' to exit PainterWorker...");
+		Scanner sc = new Scanner(System.in);
+	    
+		while(!sc.nextLine().equals("quit"));
+		logger.info("PainterWorker exited.");
+	}
 
+	@Override
+	public void onException(JMSException e) {
+		logger.error("Exception:"+e.toString());
 	}
 
 }

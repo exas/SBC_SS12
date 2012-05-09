@@ -1,11 +1,13 @@
 package at.ac.sbc.carfactory.jms.server;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import javax.annotation.PreDestroy;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
@@ -14,6 +16,8 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.Session;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 
 import org.apache.log4j.Logger;
 
@@ -25,10 +29,9 @@ import at.ac.sbc.carfactory.domain.CarMotor;
 import at.ac.sbc.carfactory.domain.CarTire;
 import at.ac.sbc.carfactory.jms.dto.CarDTO;
 import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
-import at.ac.sbc.carfactory.util.JMSServer;
 
 
-public class JobManagementListener implements MessageListener {
+public class JobManagementListener implements MessageListener, ExceptionListener {
 
     private ConnectionFactory cf;
 	private Connection connection;
@@ -44,15 +47,21 @@ public class JobManagementListener implements MessageListener {
 	public JobManagementListener() {
 		logger.debug("JobManagementListener<"+this.toString()+">: instantiated");
 		setup();
-		
 	}
 
     public void setup() {
         try {
-        	this.cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
-    		this.carPartQueue = (Queue) JMSServer.getInstance().lookup("/queue/carPartQueue");
-    		this.assemblingJobQueue = (Queue) JMSServer.getInstance().lookup("/queue/assemblingJobQueue");
-    		this.painterJobQueue = (Queue) JMSServer.getInstance().lookup("/queue/painterJobQueue");
+        	Hashtable<String, String> env = new Hashtable<String, String>();
+            env.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
+            env.put("java.naming.provider.url", "jnp://localhost:1099");
+            env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
+            Context context = new InitialContext(env);
+            
+        	
+    		this.cf = (ConnectionFactory)context.lookup("/cf");
+    		this.carPartQueue = (Queue)context.lookup("/queue/carPartQueue");
+    		this.assemblingJobQueue = (Queue)context.lookup("/queue/assemblingJobQueue");
+    		this.painterJobQueue = (Queue)context.lookup("/queue/painterJobQueue");
             
             connection = cf.createConnection();
            
@@ -82,13 +91,13 @@ public class JobManagementListener implements MessageListener {
 		
 		ObjectMessage inObjectMessage = null;
     	ObjectMessage outObjectMessage = null;
-    	Session session = null;
+    	//Session session = null;
         MessageProducer producerAssemblingJob = null;
         MessageProducer producerPainterJob = null;
         CarPartDTO carPartDTO = null;
 
         try {
-        	session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        	//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             
         	producerAssemblingJob = session.createProducer(assemblingJobQueue);
         	producerPainterJob = session.createProducer(painterJobQueue);
@@ -247,6 +256,20 @@ public class JobManagementListener implements MessageListener {
         	logger.error("JobManagementListener.onMessage: Exception: " + te.toString());
             te.printStackTrace();
         }
+//        finally {
+//			//JMS close connection and session
+//			try {
+//				if(connection != null) {
+//					connection.close();
+//				}
+//				if (session != null) {
+//					session.close();
+//				}
+//			} catch (JMSException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
 	}
     
 	 /**
@@ -255,13 +278,22 @@ public class JobManagementListener implements MessageListener {
     @PreDestroy
     public void endConnection() throws RuntimeException {
     	logger.debug("JobManagementListener<"+this.toString()+">: PREDESTROY");
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (Exception e) {
-                e.printStackTrace();
+    	try {
+    		if (connection != null) {
+    			connection.close();
+    		}
+        	if (session != null) {
+				session.close();
             }
+        } catch (Exception e) {
+                e.printStackTrace();
         }
+        
     }
+
+	@Override
+	public void onException(JMSException e) {
+		logger.error("Listener-JMSException: " + e.toString());
+	}
 
 }

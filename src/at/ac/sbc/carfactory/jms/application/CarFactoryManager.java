@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
 import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.domain.WorkTask;
 import at.ac.sbc.carfactory.jms.application.Producer;
-import at.ac.sbc.carfactory.jms.server.JobManagementListener;
+
 import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.DomainListener;
@@ -29,8 +29,7 @@ public class CarFactoryManager extends Model {
 	private static final int poolSize = 15;
 	private static final int maxPoolSize = 50;
 	private static final long keepAliveTime = 10;
-	private final JobManagementListener jobManagementListener = new JobManagementListener();
-	
+
 	private final ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(poolSize);
 	private ThreadPoolExecutor threadPool;
 	private Map<Long, Producer> producers;

@@ -15,5 +15,7 @@
 	<classpathentry kind="lib" path="config/hornetq-jms"/>
 	<classpathentry kind="lib" path="config/log4j"/>
 	<classpathentry kind="lib" path="config/xvsm"/>
+	<classpathentry kind="lib" path="lib/jnpserver.jar"/>
+	<classpathentry kind="lib" path="lib/jboss-mc.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -4,9 +4,10 @@ import org.apache.log4j.Logger;
 import at.ac.sbc.carfactory.domain.WorkTask;
 
 import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
-import at.ac.sbc.carfactory.util.CarFactoryException;
-import at.ac.sbc.carfactory.util.JMSServer;
 
+import at.ac.sbc.carfactory.util.CarFactoryException;
+
+import java.util.Hashtable;
 import java.util.Random;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +21,9 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.Session;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 public class Producer implements Runnable{
 
@@ -52,9 +56,24 @@ public class Producer implements Runnable{
 		maxWorkTime = 3000; //3 sec.
 		
 		this.tasks = new SynchronousQueue<WorkTask>();
+		Hashtable<String, String> env = new Hashtable<String, String>();
+        env.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
+        env.put("java.naming.provider.url", "jnp://localhost:1099");
+        env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
+
+		try {
+			Context context = new InitialContext(env);	
+			this.cf = (ConnectionFactory)context.lookup("/cf");
+			this.carPartQueue = (Queue)context.lookup("/queue/carPartQueue");
+		} catch (NamingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-		this.cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
-		this.carPartQueue = (Queue) JMSServer.getInstance().lookup("/queue/carPartQueue");
+		
+		 
+//		this.cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
+//		this.carPartQueue = (Queue) JMSServer.getInstance().lookup("/queue/carPartQueue");
 	}
 	
 	@Override
@@ -135,6 +154,7 @@ public class Producer implements Runnable{
 		} finally {
 			//JMS close connection and session
 				try {
+					logger.debug("Closing Connection and Session!");
 					if(connection != null) {
 						connection.close();
 					}
@@ -142,7 +162,7 @@ public class Producer implements Runnable{
 						session.close();
 					}
 				} catch (JMSException e) {
-					// TODO Auto-generated catch block
+					logger.error("Error");
 					e.printStackTrace();
 				}
 			}

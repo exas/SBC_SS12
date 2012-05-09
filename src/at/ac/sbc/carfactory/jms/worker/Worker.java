@@ -1,5 +1,6 @@
 package at.ac.sbc.carfactory.jms.worker;
 
+
 public abstract class Worker {
 
 	private long id;
@@ -15,4 +16,5 @@ public abstract class Worker {
 	public void setId(long id) {
 		this.id = id;
 	}
+
 }
