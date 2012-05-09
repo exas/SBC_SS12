@@ -163,9 +163,14 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		}
 		for (int i = 0; i < this.domainListeners.size(); i++) {
 			if (obj instanceof CarPart) {
-				this.domainListeners.get(i).carPartUpdated((CarPart)obj);
+				this.domainListeners.get(i).carPartUpdated((CarPart)obj, false);
 			}
 			else {
+				this.domainListeners.get(i).carPartUpdated(((Car)obj).getBody(), true);
+				this.domainListeners.get(i).carPartUpdated(((Car)obj).getMotor(), true);
+				for(int j = 0; j < ((Car)obj).getTires().size(); j++) {
+					this.domainListeners.get(i).carPartUpdated(((Car)obj).getTires().get(j), true);
+				}
 				this.domainListeners.get(i).carUpdated((Car)obj);
 			
 			}

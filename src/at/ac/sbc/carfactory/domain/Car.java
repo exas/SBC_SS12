@@ -3,27 +3,41 @@ package at.ac.sbc.carfactory.domain;
 import java.io.Serializable;
 import java.util.List;
 
+import org.mozartspaces.capi3.Index;
+import org.mozartspaces.capi3.Queryable;
+
+@Queryable
 public class Car implements Serializable {
 
 	private static final long serialVersionUID = -5463318055982788409L;
 	private Long id;
 	
 	private Long assemblyWorkerId;
+	@Index(label="painted")
 	private Long painterWorkerId;
 	private Long logisticWorkerId;
 	
 	private CarBody body;
 	private CarMotor motor;
 	private List<CarTire> tires;
+	
+	@Index(label="type")
+	private CarPartType carPartType;
 
 	public Car() {
+		this.carPartType = CarPartType.CAR;
+		this.painterWorkerId = null;
+		this.logisticWorkerId = null;
 	}
 	
 	public Car(CarBody body, CarMotor motor, List<CarTire> tires) {
 		super();
+		this.carPartType = CarPartType.CAR;
 		this.body = body;
 		this.motor = motor;
 		this.tires = tires;
+		this.painterWorkerId = null;
+		this.logisticWorkerId = null;
 	}
 	
 	public Car(Long assemblyWorkerId, CarBody body, CarMotor motor, List<CarTire> tires) {

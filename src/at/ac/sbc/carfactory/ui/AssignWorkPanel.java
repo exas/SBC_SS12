@@ -32,8 +32,13 @@ public class AssignWorkPanel extends JDialog {
 
 		JLabel producerLabel = new JLabel("Producer: " + this.producerID);
 
-
-		final JComboBox carPartList = new JComboBox(CarPartType.values());
+		CarPartType[] carPartTypes = new CarPartType[3];
+		for(int i = 0; i < CarPartType.values().length; i++) {
+			if(CarPartType.values()[i].equals(CarPartType.CAR) == false) {
+				carPartTypes[i] = CarPartType.values()[i];
+			}
+		}
+		final JComboBox carPartList = new JComboBox(carPartTypes);
 		carPartList.setSelectedIndex(0);
 		
 		Integer[] array = {1,2,3,4,5,6,7,8,9};

@@ -43,6 +43,8 @@ public class Logistician extends Worker {
 				car.setLogisticWorkerId(this.getId());
 				this.space.writeLabelEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), car, WorkTaskLabel.CAR_FINISHED);
 			}
+			this.space.commitTransaction(tx);
+			System.out.println("Logistician " + this.getId() + " finished car " + ((Car)carE.get(0)).getId());
 		} catch (CarFactoryException ex) {
 			ex.printStackTrace();
 			Logger.getLogger(Logistician.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
@@ -52,7 +54,10 @@ public class Logistician extends Worker {
 				Logger.getLogger(Logistician.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
 				e.printStackTrace();
 			}
-		}	
+		} catch (Exception ex) {
+ 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "Exception", ex.getMessage());
+			System.exit(-1);
+ 		}
 	}
 	
 	public static void main(String[] args) {

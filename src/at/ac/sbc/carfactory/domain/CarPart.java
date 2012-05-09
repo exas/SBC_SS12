@@ -2,6 +2,10 @@ package at.ac.sbc.carfactory.domain;
 
 import java.io.Serializable;
 
+import org.mozartspaces.capi3.Index;
+import org.mozartspaces.capi3.Queryable;
+
+@Queryable
 public abstract class CarPart implements Serializable {
 
 	private static final long serialVersionUID = 6513813391956502127L;
@@ -9,7 +13,8 @@ public abstract class CarPart implements Serializable {
 	protected long id;
 	protected Long producerId;
 
-	private CarPartType carPartType;
+	@Index(label="type")
+	protected CarPartType carPartType;
 	private Long carId;
 	
 	private boolean isFree;
