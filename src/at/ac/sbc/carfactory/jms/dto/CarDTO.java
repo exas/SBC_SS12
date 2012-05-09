@@ -3,6 +3,7 @@ package at.ac.sbc.carfactory.jms.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import at.ac.sbc.carfactory.domain.CarColor;
 import at.ac.sbc.carfactory.domain.CarTire;
 
 //Data Transfer Object, just a simple class which holds all relevant data for transfering this object via Messaging/Queues.
@@ -12,7 +13,7 @@ public class CarDTO implements java.io.Serializable{
 	private static final long serialVersionUID = 1L;
 	
 	private Long id;
-	private String color;
+	private CarColor color;
 	private Long assemblyWorkerId;
 	private Long painterWorkerId;
 	private Long logisticWorkerId;
@@ -22,8 +23,10 @@ public class CarDTO implements java.io.Serializable{
 	
 	private List<Long> carTireIds;
 	
+	
+	
 	public CarDTO() {
-		
+		this.color = null;
 	}
 	
 	public Long getId() {
@@ -34,11 +37,11 @@ public class CarDTO implements java.io.Serializable{
 		this.id = id;
 	}
 
-	public String getColor() {
+	public CarColor getColor() {
 		return color;
 	}
 
-	public void setColor(String color) {
+	public void setColor(CarColor color) {
 		this.color = color;
 	}
 

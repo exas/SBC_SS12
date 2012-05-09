@@ -1,113 +1,148 @@
 package at.ac.sbc.carfactory.jms.worker;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import org.mozartspaces.core.TransactionReference;
+import org.apache.log4j.Logger;
 
-import at.ac.sbc.carfactory.domain.Car;
-import at.ac.sbc.carfactory.domain.CarBody;
-import at.ac.sbc.carfactory.domain.CarMotor;
-import at.ac.sbc.carfactory.domain.CarTire;
-import at.ac.sbc.carfactory.util.CarFactoryException;
-import at.ac.sbc.carfactory.xvms.util.ConfigSettings;
-import at.ac.sbc.carfactory.xvms.util.CoordinatorType;
-import at.ac.sbc.carfactory.xvms.util.SpaceUtil;
-import at.ac.sbc.carfactory.xvms.util.WorkTaskLabel;
+import at.ac.sbc.carfactory.jms.dto.CarDTO;
+import at.ac.sbc.carfactory.util.JMSServer;
 
-public class Assembler extends Worker {
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.jms.Session;
 
-	private SpaceUtil space;
+
+public class Assembler extends Worker implements MessageListener {
+
+	private ConnectionFactory cf;
+	private Connection connection;
+	private Session session;
+	private Queue assemblingJobQueue;
+	private Queue painterJobQueue;
+	private Queue assembledCarQueue;
+	private MessageConsumer messageConsumer;
+	
+	
+	private final static Logger logger = Logger.getLogger(Assembler.class);
 	
 	public Assembler(long id) {
 		super(id);
-		this.initSpace();
+		this.setup();
 	}
 		
-	private void initSpace() {
-		try {
-			this.space = new SpaceUtil();
-			if(this.space.lookupContainer(ConfigSettings.containerCarPartsName) == null) {
-				this.space.createContainer(ConfigSettings.containerCarPartsName, CoordinatorType.LABEL);
-			}
-			if(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName) == null) {
-				this.space.createContainer(ConfigSettings.containerFinishedCarsName, CoordinatorType.FIFO);
-			}
-		} catch (CarFactoryException ex) {
-			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
-		}
-	}
+	public void setup() {
+        try {
+        	//TODO connect to server do not create a new Server !!
+        	
+        	this.cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
+    		this.assembledCarQueue = (Queue) JMSServer.getInstance().lookup("/queue/assembledCarQueue");
+    		this.assemblingJobQueue = (Queue) JMSServer.getInstance().lookup("/queue/assemblingJobQueue");
+    		this.painterJobQueue = (Queue) JMSServer.getInstance().lookup("/queue/painterJobQueue");
+            
+            connection = cf.createConnection();
+            
+          //TODO check at every listener if this is necessary since in onMessage i create again a Session??
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            
+            messageConsumer = session.createConsumer(assemblingJobQueue);
+    		messageConsumer.setMessageListener(this);
+    		connection.start();
+            //topicConnFactory = 
+            //producer = session.createProducer(topic);
+        } catch (Throwable t) {
+            // JMSException could be thrown
+            logger.error("<"+this.getId()+">:setup:" + "Exception: "+ t.toString());
+        }
+    }
 	
-	public void buildCar() {
-		TransactionReference tx;
-		try {
-			tx = this.space.createTransaction();
-		} catch (CarFactoryException ex) {
-			// COULD NOT CREATE TRANSACTION:
-			Logger.getLogger(Assembler.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
-			return;
-		}
-		try {
-			ArrayList<Serializable> bodyE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR, WorkTaskLabel.CAR_BODY), 1, tx, false);
-			ArrayList<Serializable> motorE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_MOTOR), 1, tx, true);
-			ArrayList<Serializable> tiresE = this.space.readEntry(this.space.lookupContainer(ConfigSettings.containerCarPartsName), CoordinatorType.LABEL, Arrays.asList(WorkTaskLabel.CAR_TIRE), 4, tx, true);
-			
-			if ((bodyE == null || bodyE.size() == 0) || (motorE == null || motorE.size() == 0) || (tiresE == null || tiresE.size() != 4)) {
-				System.out.println("NOT ALL PARTS FOUND");
-				this.space.rollbackTransaction(tx);
-				return;
-			}
-			System.out.println("BEFORE CREATING CAR");
-			CarBody body = (CarBody)bodyE.get(0);
-			CarMotor motor = (CarMotor)motorE.get(0);
-			
-			ArrayList<CarTire> tires = new ArrayList<CarTire>();
-			for(Serializable tire : tiresE) {
-				tires.add((CarTire)tire);
-			}
-			Car car = new Car(body, motor, tires);
-			
-			if (car.getBody().isPainted() == true) {
-				this.space.writeFinalCar(this.space.lookupContainer(ConfigSettings.containerFinishedCarsName), car, tx);
-			}
-			else {
-				//
-			}
-			this.space.commitTransaction(tx);
-			System.out.println("DONE WRITING CAR");
-		} catch (CarFactoryException ex) {
-			ex.printStackTrace();
-			Logger.getLogger(Assembler.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
-			try {
-				this.space.rollbackTransaction(tx);
-			} catch (CarFactoryException e) {
-				Logger.getLogger(Assembler.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
-				e.printStackTrace();
-			}
-		}
+	@Override
+	public void onMessage(Message inMessage) {
+		logger.debug("<"+this.getId()+">: on Message");
+		
+		if(session == null) {
+    		logger.error("<"+this.getId()+">:onMessage  Session is NULL, RETURN, no processing of message possibel.");
+    		return;
+    	}
+		
+		ObjectMessage inObjectMessage = null;
+    	ObjectMessage outObjectMessage = null;
+    	Session session = null;
+        MessageProducer producerAssembledCar = null;
+        MessageProducer producerPainterJob = null;
+        CarDTO carDTO = null;
+
+        try {
+        	session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            
+        	producerAssembledCar = session.createProducer(assembledCarQueue);
+        	producerPainterJob = session.createProducer(painterJobQueue);
+        	
+        	if (inMessage instanceof ObjectMessage) {
+    			inObjectMessage = (ObjectMessage) inMessage;
+            	
+    			if (inObjectMessage.getObject() instanceof CarDTO) {
+	    			carDTO = (CarDTO)inObjectMessage.getObject();
+
+					//Painter sent this message to the Queue
+					logger.debug("<"+this.getId()+">: Received Msg from Server JobManagement Car to Assemble.");
+					
+					if(carDTO.getId() != null) {
+						carDTO.setAssemblyWorkerId(this.getId());
+						
+						//check if painted
+						if(carDTO.getColor() != null) {
+							//send CarDTO to assembledCarQueue
+	            			
+	            			outObjectMessage = session.createObjectMessage(carDTO);
+	            			
+	            			producerAssembledCar.send(outObjectMessage);
+	            			
+	            			logger.debug("<"+this.getId()+">: AssembledCar with Car<"+carDTO.getId()+"> is send out to assembledCarQUEUE");
+						} else {
+							//send CarDTO to painterJobQueue
+	            			
+	            			outObjectMessage = session.createObjectMessage(carDTO);
+	            			outObjectMessage.setStringProperty("type", "assembledCar");
+	            			
+	            			producerPainterJob.send(outObjectMessage);
+	            			
+	            			logger.debug("<"+this.getId()+">: AssembledCar with Car<"+carDTO.getId()+"> is send out to painterJobQUEUE since not painted.");
+						}
+					}
+				}
+        	}
+        } catch (JMSException e) {
+            logger.error("onMessage: JMSException: " + e.toString());
+            e.printStackTrace();
+        } catch (Throwable te) {
+        	logger.error("onMessage: Exception: " + te.toString());
+            te.printStackTrace();
+        }
 	}
 	
 	public static void main(String[] args) {
 		 if(args.length != 1) {
-			 Logger.getLogger(Assembler.class.getName()).log(Level.INFO, "Provide ID as argument", "Provide ID as argument");
+			 logger.error("Provide a numeric ID as argument");
 			 System.exit(-1);
 		 }
 		 Long id = null;
 		 try {
 			 id = Long.parseLong(args[0]);
 		 } catch (Exception ex) {
-			 Logger.getLogger(Assembler.class.getName()).log(Level.INFO, "Provide ID as argument", "Provide ID as argument");
+			 logger.error("Provide a numeric ID as argument");
 			 System.exit(-1);
 		 }
 		 
-		 Assembler assembler = new Assembler(id);
-		 while(true) {
-			assembler.buildCar();
-			break;
-		 }
+		@SuppressWarnings("unused")
+		Assembler assembler = new Assembler(id);
 	}
+
+
 
 }

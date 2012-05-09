@@ -2,9 +2,7 @@ package at.ac.sbc.carfactory.jms.server;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -19,10 +17,11 @@ import javax.jms.Session;
 
 import org.apache.log4j.Logger;
 
+import at.ac.sbc.carfactory.backend.CarDaoSimpleImpl;
 import at.ac.sbc.carfactory.backend.CarPartDaoSimpleImpl;
+import at.ac.sbc.carfactory.domain.Car;
 import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarMotor;
-import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.CarTire;
 import at.ac.sbc.carfactory.jms.dto.CarDTO;
 import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
@@ -56,6 +55,8 @@ public class JobManagementListener implements MessageListener {
     		this.painterJobQueue = (Queue) JMSServer.getInstance().lookup("/queue/painterJobQueue");
             
             connection = cf.createConnection();
+           
+            //TODO check at every listener if this is necessary since in onMessage i create again a Session??
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             
             messageConsumer = session.createConsumer(carPartQueue);
@@ -180,6 +181,12 @@ public class JobManagementListener implements MessageListener {
 		            			carDTO.setCarMotorId(new Long(carMotor.getId()));
 		            			carDTO.setCarTireIds(carTireIds);
 		            			
+		            			Car car = new Car(carBody, carMotor, carTires);
+		            			CarDaoSimpleImpl.getInstance().saveCarToAssemble(car);
+		            			
+		            			if(car.getId() != null)
+		            				carDTO.setId(car.getId());
+		            			
 		            			//send carDTO to assemblingJobQueue
 		            			
 		            			outObjectMessage = session.createObjectMessage(carDTO);
@@ -209,6 +216,7 @@ public class JobManagementListener implements MessageListener {
 		            			//send carBodyDTO to painterJobQueue
 		            			
 		            			outObjectMessage = session.createObjectMessage(carBodyDTO);
+		            			outObjectMessage.setStringProperty("type", "carBody");
 		            			producerPainterJob.send(outObjectMessage);
 		            			
 		            			logger.debug("JobManagementListener<"+this.toString()+">: PainterJob with CarBody<"+carBodyDTO.getId()+"> is send out to QUEUE");

@@ -6,7 +6,7 @@ import java.util.List;
 public class Car implements Serializable {
 
 	private static final long serialVersionUID = -5463318055982788409L;
-	private long id;
+	private Long id;
 	
 	private Long assemblyWorkerId;
 	private Long painterWorkerId;
@@ -34,11 +34,11 @@ public class Car implements Serializable {
 		this.assemblyWorkerId = assemblyWorkerId;
 	}
 	
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 	

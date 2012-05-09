@@ -50,7 +50,7 @@ public class CarPartDaoSimpleImpl {
 	public void updateCarBodyById(final Long id,
 	                               final CarBody carBodyForUpdate) {
 	    final CarBody carBodyToUpdate = getCarBodyById(id);
-	    //update fields
+	    //TODO update fields
 	}
 	
 	public void deleteCarBodyById(final Long id) { carBodys.remove(id); }
@@ -70,7 +70,7 @@ public class CarPartDaoSimpleImpl {
 	public void updateCarMotorById(final Long id,
 	                               final CarMotor carMotorForUpdate) {
 	    final CarMotor carMotorToUpdate = getCarMotorById(id);
-	    //update fields
+	    //TODO update fields
 	}
 	
 	public void deleteCarMotorById(final Long id) { carMotors.remove(id); }
@@ -91,7 +91,7 @@ public class CarPartDaoSimpleImpl {
 	public void updateCarTireById(final Long id,
 	                               final CarTire carTireForUpdate) {
 	    final CarTire carBodyToUpdate = getCarTireById(id);
-	    //update fields
+	    //TODO update fields
 	}
 	
 	public void deleteCarTireById(final Long id) { carTires.remove(id); }
@@ -113,7 +113,7 @@ public class CarPartDaoSimpleImpl {
 	public void updateFreeCarBodyById(final Long id,
 	                               final CarBody carBodyForUpdate) {
 	    final CarBody carBodyToUpdate = getFreeCarBodyById(id);
-	    //update fields
+	    //TODO update fields
 	}
 	
 	public void deleteFreeCarBodyById(final Long id) { freeCarBodys.remove(id); }
@@ -134,7 +134,7 @@ public class CarPartDaoSimpleImpl {
 	public void updateFreeCarMotorById(final Long id,
 	                               final CarMotor carMotorForUpdate) {
 	    final CarMotor carMotorToUpdate = getFreeCarMotorById(id);
-	    //update fields
+	    //TODO update fields
 	}
 	
 	public void deleteFreeCarMotorById(final Long id) { freeCarMotors.remove(id); }
@@ -155,7 +155,7 @@ public class CarPartDaoSimpleImpl {
 	public void updateFreeCarTireById(final Long id,
 	                               final CarTire carTireForUpdate) {
 	    final CarTire carBodyToUpdate = getFreeCarTireById(id);
-	    //update fields
+	    // TODO update fields
 	}
 	
 	public void deleteFreeCarTireById(final Long id) { freeCarTires.remove(id); }
