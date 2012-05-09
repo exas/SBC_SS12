@@ -59,13 +59,14 @@ public class StatisticCarPartsPanel extends JPanel {
 		return table;
 	}
 
-	public void carPartUpdate(CarPart part) {
+	public void carPartUpdate(CarPart part, boolean finished) {
 		int row = this.findCarPart(part);
 		Object[] temp = new Object[4];
 		temp[0] = part.getId();
 		temp[1] = part.getCarPartType();
 		temp[2] = part.getProducerId();
 		temp[3] = null;
+		temp[4] = null;
 		try {
 			if (Class.forName(CarBody.class.getName()).isInstance(part)) {
 				if(((CarBody)part).isPainted() == true) {
@@ -75,6 +76,10 @@ public class StatisticCarPartsPanel extends JPanel {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+		if(finished == true) {
+			temp[4] = "finished";
+		}
+		
 		if(row == -1) {
 			this.tableModel.addRow(temp);
 			this.tableModel.fireTableDataChanged();

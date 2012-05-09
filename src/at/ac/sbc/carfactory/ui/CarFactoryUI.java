@@ -211,8 +211,8 @@ public class CarFactoryUI extends View implements DomainListener, LogListener, W
 	}
 
 	@Override
-	public void carPartUpdated(CarPart part) {
-		this.statisticCarPartsPanel.carPartUpdate(part);
+	public void carPartUpdated(CarPart part, boolean finished) {
+		this.statisticCarPartsPanel.carPartUpdate(part, finished);
 	}
 
 	@Override

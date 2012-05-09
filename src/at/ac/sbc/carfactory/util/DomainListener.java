@@ -5,7 +5,7 @@ import at.ac.sbc.carfactory.domain.CarPart;
 
 public interface DomainListener {
 
-	public void carPartUpdated(CarPart part);
+	public void carPartUpdated(CarPart part, boolean finshed);
 	
 	public void carUpdated(Car car);
 }
