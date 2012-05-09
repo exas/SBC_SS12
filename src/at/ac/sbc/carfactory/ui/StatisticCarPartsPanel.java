@@ -61,7 +61,7 @@ public class StatisticCarPartsPanel extends JPanel {
 
 	public void carPartUpdate(CarPart part, boolean finished) {
 		int row = this.findCarPart(part);
-		Object[] temp = new Object[4];
+		Object[] temp = new Object[5];
 		temp[0] = part.getId();
 		temp[1] = part.getCarPartType();
 		temp[2] = part.getProducerId();

@@ -68,7 +68,9 @@ public class StatisticCarsPanel extends JPanel {
 			if (i == (car.getTires().size() - 1)) {
 				temp[3] = (String)temp[3] + car.getTires().get(i).getId();
 			}
-			temp[3] = (String)temp[3] + car.getTires().get(i).getId() + ", ";
+			else {
+				temp[3] = (String)temp[3] + car.getTires().get(i).getId() + ", ";
+			}
 		}
 		
 		temp[4] = car.getAssemblyWorkerId();
@@ -77,6 +79,7 @@ public class StatisticCarsPanel extends JPanel {
 			temp[6] = true;
 		}
 		if(row == -1) {
+			System.out.println("DIDN'T FIND CAR " + car.getId());
 			this.tableModel.addRow(temp);
 			this.tableModel.fireTableDataChanged();
 		}
@@ -93,7 +96,7 @@ public class StatisticCarsPanel extends JPanel {
 	private int findCar(Car car) {
 		int nRow = tableModel.getRowCount();
 		for (int i = 0; i < nRow; i++) {
-			if ((Long) tableModel.getValueAt(i, 0) == car.getId()) {
+			if (((Long) tableModel.getValueAt(i, 0)).equals(car.getId())) {
 				return i;
 			}
 		}
