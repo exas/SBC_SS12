@@ -15,6 +15,8 @@ public class CarPartDTO implements java.io.Serializable{
 	private CarColor bodyColor;
 	private Long painterId;
 	
+	private Long carId;
+	
 	
 	public Long getId() {
 		return id;
@@ -46,6 +48,13 @@ public class CarPartDTO implements java.io.Serializable{
 	public void setPainterId(Long painterId) {
 		this.painterId = painterId;
 	}
+	public Long getCarId() {
+		return carId;
+	}
+	public void setCarId(Long carId) {
+		this.carId = carId;
+	}
+
 
 	
 }

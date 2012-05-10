@@ -32,36 +32,38 @@ public class Painter extends Worker implements MessageListener, ExceptionListene
 	private ConnectionFactory cf;
 	private Connection connection;
 	private Session session;
-	private Queue painterJobQueue;
+	private Queue painterJobQueue; //consumer
 	private Queue assembledCarQueue;
 	private Queue carPartQueue;
+	private Queue updateGUIQueue;
 	private MessageConsumer messageConsumer;
+	private Context context;
 	
 	private final static Logger logger = Logger.getLogger(Painter.class);
 	
 	public Painter(long id, CarColor color) {
 		super(id);
 		this.color = color;
-		this.setup();
+		this.startListening();
 	}
 		
-	public void setup() {
+	public void startListening() {
         try {
         	Hashtable<String, String> env = new Hashtable<String, String>();
             env.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
             env.put("java.naming.provider.url", "jnp://localhost:1099");
             env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
-            Context context = new InitialContext(env);
+            context = new InitialContext(env);
             
     		this.cf = (ConnectionFactory)context.lookup("/cf");
-        	//TODO connect to server do not create a new Server Instance!
+        	
     		this.assembledCarQueue = (Queue) context.lookup("/queue/assembledCarQueue");
     		this.painterJobQueue = (Queue) context.lookup("/queue/painterJobQueue");
     		this.carPartQueue = (Queue) context.lookup("/queue/carPartQueue");
+            this.updateGUIQueue = (Queue) context.lookup("/queue/updateGUIQueue");
             
             connection = cf.createConnection();
             
-          //TODO check at every listener if this is necessary since in onMessage i create again a Session??
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             
             //listens to painterJobQueue
@@ -87,15 +89,16 @@ public class Painter extends Worker implements MessageListener, ExceptionListene
 		
 		ObjectMessage inObjectMessage = null;
     	ObjectMessage outObjectMessage = null;
-    	//Session session = null;
         MessageProducer producerAssembledCar = null;
         MessageProducer producerCarPart = null;
+        MessageProducer producerUpdateGUI = null;
         
         try {
         	//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             
         	producerAssembledCar = session.createProducer(assembledCarQueue);
         	producerCarPart = session.createProducer(carPartQueue);
+        	producerUpdateGUI = session.createProducer(updateGUIQueue);
         	
         	if (inMessage instanceof ObjectMessage) {
     			inObjectMessage = (ObjectMessage) inMessage;
@@ -114,22 +117,26 @@ public class Painter extends Worker implements MessageListener, ExceptionListene
 					logger.debug("<"+this.getId()+">: Received Msg from Assembler with an AssembledCar to paint.");
 					
 					if(carDTO.getId() != null) {
-						carDTO.setPainterWorkerId(this.getId());
+						carDTO.getCarBody().setPainterId(this.getId());
 						
 						//paint the car
-						carDTO.setColor(this.color);
+						carDTO.getCarBody().setBodyColor(this.color);
 							
             			outObjectMessage = session.createObjectMessage(carDTO);
             			
             			producerAssembledCar.send(outObjectMessage);
+            			logger.debug("<"+this.getId()+">: AssembledCar with Car<"+carDTO.getId()+"> is painted and send out to assembledCarQUEUE");
             			
-            			logger.debug("<"+this.getId()+">: AssembledCar with Car<"+carDTO.getId()+"> is send out to assembledCarQUEUE");
+            			//update GUI
+            			producerUpdateGUI.send(outObjectMessage);
+            			logger.debug("<"+this.getId()+">: Assembled Car is painted - Update GUI Queue, Msg sent.");
+            			
 					}
 				} else if (inObjectMessage.getObject() instanceof CarPartDTO) {
 					CarPartDTO carPartDTO = (CarPartDTO)inObjectMessage.getObject();
 
 					//Painter sent this message to the Queue
-					logger.debug("<"+this.getId()+">: Received Msg from Assembler with an AssembledCar to paint.");
+					logger.debug("<"+this.getId()+">: Received Msg from JobManagement with single CarBody to paint.");
 					
 					if(carPartDTO.getId() != null && carPartDTO.getCarPartType() == CarPartType.CAR_BODY) {
 						
@@ -144,6 +151,10 @@ public class Painter extends Worker implements MessageListener, ExceptionListene
             			producerCarPart.send(outObjectMessage);
             			
             			logger.debug("<"+this.getId()+">: CarBody<"+carPartDTO.getId()+"> is painted and send back to carPartQueue.");
+            			
+            			//update GUI
+            			producerUpdateGUI.send(outObjectMessage);
+            			logger.debug("<"+this.getId()+">: CarBody is painted - Update GUI Queue, Msg sent.");
 					}
 				}
         	}
@@ -153,7 +164,20 @@ public class Painter extends Worker implements MessageListener, ExceptionListene
         } catch (Throwable te) {
         	logger.error("onMessage: Exception: " + te.toString());
             te.printStackTrace();
-        }
+        } finally {
+			//JMS close connection and session
+        	logger.info("JMS:Closing Message Producers!");
+			try { if( producerAssembledCar != null ) producerAssembledCar.close();  } catch( Exception ex ) {/*ok*/}
+			try { if( producerCarPart != null ) producerCarPart.close();  } catch( Exception ex ) {/*ok*/}
+			try { if( producerUpdateGUI != null ) producerUpdateGUI.close();  } catch( Exception ex ) {/*ok*/}
+		}
+	}
+	
+	public void stopListening() {
+		try { if( messageConsumer != null ) messageConsumer.close(); } catch( Exception ex ) {/*ok*/}
+	    try { if( session != null ) session.close();  } catch( Exception ex ) {/*ok*/}
+	    try { if( connection != null ) connection.close();  } catch( Exception ex ) {/*ok*/}
+	    try { if( context != null ) context.close(); } catch( Exception ex ) {/*ok*/}
 	}
 
 	public static void main(String[] args) {
@@ -186,13 +210,16 @@ public class Painter extends Worker implements MessageListener, ExceptionListene
 			 color = CarColor.WHITE;
 		 }
 		 
-		@SuppressWarnings("unused")
 		Painter painter = new Painter(id, color);
 		
 		logger.info("Enter 'quit' to exit PainterWorker...");
 		Scanner sc = new Scanner(System.in);
 	    
 		while(!sc.nextLine().equals("quit"));
+		
+		painter.stopListening();
+		logger.info("Stopped Listening properly.");
+		
 		logger.info("PainterWorker exited.");
 	}
 

@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 
 import org.apache.log4j.Logger;
 
-import at.ac.sbc.carfactory.jms.server.JMSServer;
 import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.ui.util.View;
 
@@ -69,8 +68,14 @@ public class Controller {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			
-			logger.debug("Closing View");
+			if(model.shutdown())
+				logger.info("Model Shutdown successfully.");
+			else
+				logger.info("Model could not shutdown properly.");
+			
+			logger.debug("Closing View properly.");
 			view.closeView();
+			logger.debug("Closed View.");
 		}
 	}//end inner class CloseAppListener
 	

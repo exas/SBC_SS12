@@ -11,10 +11,11 @@ public class Car implements Serializable {
 
 	private static final long serialVersionUID = -5463318055982788409L;
 	private Long id;
-	
 	private Long assemblyWorkerId;
+	
 	@Index(label="painted")
 	private Long painterWorkerId;
+	
 	private Long logisticWorkerId;
 	
 	private CarBody body;

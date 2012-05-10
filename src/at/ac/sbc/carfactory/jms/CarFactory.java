@@ -1,6 +1,3 @@
-/**
- * 
- */
 package at.ac.sbc.carfactory.jms;
 
 import at.ac.sbc.carfactory.ui.CarFactoryUI;
@@ -8,11 +5,10 @@ import at.ac.sbc.carfactory.ui.util.Model;
 import at.ac.sbc.carfactory.ui.util.View;
 import at.ac.sbc.carfactory.util.Controller;
 import at.ac.sbc.carfactory.util.DomainListener;
-import at.ac.sbc.carfactory.util.ICarFactoryManager;
+
 import at.ac.sbc.carfactory.util.LogListener;
 import at.ac.sbc.carfactory.jms.application.CarFactoryManager;
-import at.ac.sbc.carfactory.jms.server.JMSServer;
-import at.ac.sbc.carfactory.jms.server.JobManagementListener;
+
 
 /**
  * @author exas

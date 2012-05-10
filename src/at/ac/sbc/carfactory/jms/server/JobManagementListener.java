@@ -91,14 +91,11 @@ public class JobManagementListener implements MessageListener, ExceptionListener
 		
 		ObjectMessage inObjectMessage = null;
     	ObjectMessage outObjectMessage = null;
-    	//Session session = null;
         MessageProducer producerAssemblingJob = null;
         MessageProducer producerPainterJob = null;
         CarPartDTO carPartDTO = null;
 
         try {
-        	//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            
         	producerAssemblingJob = session.createProducer(assemblingJobQueue);
         	producerPainterJob = session.createProducer(painterJobQueue);
         	
@@ -128,6 +125,9 @@ public class JobManagementListener implements MessageListener, ExceptionListener
 	    					
 	    					//save into free CarBodyList
 	    					CarPartDaoSimpleImpl.getInstance().saveFreeCarBody(carBody);
+	    					
+	    					//Check if new AssembleJob or BodyPaintJob is available and send JobMsg
+	    					checkForNewJob(outObjectMessage, producerAssemblingJob, producerPainterJob);
 	    				}
 	    				
 	    			} 
@@ -161,90 +161,8 @@ public class JobManagementListener implements MessageListener, ExceptionListener
 			            			break;
 		            		}
 		            		
-		            		//check if enough parts free for assemblingJob
-		            		CarBody carBody = CarPartDaoSimpleImpl.getInstance().getNextFreeCarBodyAndRemove();
-		            		CarMotor carMotor = CarPartDaoSimpleImpl.getInstance().getNextFreeCarMotorAndRemove();
-		            		List<CarTire> carTires = CarPartDaoSimpleImpl.getInstance().getNextFreeCarTireSetAndRemove();
-		            		
-		            		if(carBody != null && carMotor != null && carTires.size() == 4) {
-		            			//assemble is possible
-		            			logger.debug("<"+this.hashCode()+">: AssembleJob is possible (Body,Motor,4xTire reserved).");
-		            			logger.debug("CarBody:<"+carBody.getId()+">, Producer:<"+carBody.getProducerId()+">");
-		            			logger.debug("CarMotor:<"+carMotor.getId()+">, Producer:<"+carMotor.getProducerId()+">");
-		            			//save back to in-memory-DB but not in free LIST, into used List
-		            			CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
-		            			CarPartDaoSimpleImpl.getInstance().saveCarMotor(carMotor);
-		            			
-		            			
-		            			List<Long> carTireIds = new ArrayList<Long>();
-		            			
-		            			for(CarTire carTire: carTires) {
-		            				logger.debug("CarTire:<"+carTire.getId()+">, Producer:<"+carTire.getProducerId()+">");
-		            				carTireIds.add(carTire.getId());
-		            				CarPartDaoSimpleImpl.getInstance().saveCarTire(carTire);
-		            			}
-		            			
-		            			//create Data Transfer Object (minimal objects containing only IDs...)
-		            			CarDTO carDTO = new CarDTO();
-		            			carDTO.setCarBodyId(new Long(carBody.getId()));
-		            			carDTO.setCarMotorId(new Long(carMotor.getId()));
-		            			carDTO.setCarTireIds(carTireIds);
-		            			
-		            			Car car = new Car(carBody, carMotor, carTires);
-		            			CarDaoSimpleImpl.getInstance().saveCarToAssemble(car);
-		            			
-		            			if(car.getId() != null)
-		            				carDTO.setId(car.getId());
-		            			
-		            			//send carDTO to assemblingJobQueue
-		            			
-		            			outObjectMessage = session.createObjectMessage(carDTO);
-		            			producerAssemblingJob.send(outObjectMessage);
-
-		            		} else if (carBody != null && carBody.isPainted() == false) {
-		            			//PainterJob for single Body is available
-		            			logger.debug("<"+this.hashCode()+">: PainterJob is possible (CarBody<"+carBody.getId()+"> reserved).");
-		            			
-		            			//save back to in-memory-DB but not in free LIST, into used CarPart List
-		            			CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
-		            			
-		            			//save Motor and Tires into Free list since not USED for PainterJob Creation!
-		            			if(carMotor != null) {
-		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarMotor(carMotor);
-		            			}
-		            			
-		            			for(CarTire carTire: carTires) {
-		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarTire(carTire);
-		            			}
-		            			
-		            			CarPartDTO carBodyDTO = new CarPartDTO();
-		            			carBodyDTO.setId(new Long(carBody.getId()));
-		            			carBodyDTO.setCarPartType(carBody.getCarPartType());
-		            			carBodyDTO.setProducerId(carBody.getProducerId());
-		            			
-		            			//send carBodyDTO to painterJobQueue
-		            			
-		            			outObjectMessage = session.createObjectMessage(carBodyDTO);
-		            			outObjectMessage.setStringProperty("type", "carBody");
-		            			producerPainterJob.send(outObjectMessage);
-		            			
-		            			logger.debug("JobManagementListener<"+this.toString()+">: PainterJob with CarBody<"+carBodyDTO.getId()+"> is send out to QUEUE");
-		            			
-		            		} else {
-		            			//save back to in-memory-DB in free LIST since no match and give up reserved ones!
-		            		
-		            			if(carBody != null) {
-		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarBody(carBody);
-		            			}
-		            			//save Motor and Tires into Free list since not USED for PainterJob Creation!
-		            			if(carMotor != null) {
-		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarMotor(carMotor);
-		            			}
-		            			
-		            			for(CarTire carTire: carTires) {
-		            				CarPartDaoSimpleImpl.getInstance().saveFreeCarTire(carTire);
-		            			}
-		            		}
+		            		//Check if new AssembleJob or BodyPaintJob is available and send JobMsg
+		            		checkForNewJob(outObjectMessage, producerAssemblingJob, producerPainterJob);
 		            	}
 		            }
     			}
@@ -255,24 +173,125 @@ public class JobManagementListener implements MessageListener, ExceptionListener
         } catch (Throwable te) {
         	logger.error("JobManagementListener.onMessage: Exception: " + te.toString());
             te.printStackTrace();
-        }
-//        finally {
-//			//JMS close connection and session
-//			try {
-//				if(connection != null) {
-//					connection.close();
-//				}
-//				if (session != null) {
-//					session.close();
-//				}
-//			} catch (JMSException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
+        } finally {
+			//JMS close connection and session
+        	logger.info("JMS:Closing Message Producers!");
+			try { if( producerAssemblingJob != null ) producerAssemblingJob.close();  } catch( Exception ex ) {/*ok*/}
+			try { if( producerPainterJob != null ) producerPainterJob.close();  } catch( Exception ex ) {/*ok*/}
+		}
+
 	}
     
-	 /**
+	 private void checkForNewJob(ObjectMessage outObjectMessage, MessageProducer producerAssemblingJob, MessageProducer producerPainterJob) throws JMSException {
+		//check if enough parts free for assemblingJob
+ 		CarBody carBody = CarPartDaoSimpleImpl.getInstance().getNextFreeCarBodyAndRemove();
+ 		CarMotor carMotor = CarPartDaoSimpleImpl.getInstance().getNextFreeCarMotorAndRemove();
+ 		List<CarTire> carTires = CarPartDaoSimpleImpl.getInstance().getNextFreeCarTireSetAndRemove();
+ 		
+ 		if(carBody != null && carMotor != null && carTires.size() == 4) {
+ 			//assemble is possible
+ 			logger.debug("<"+this.hashCode()+">: AssembleJob is possible (Body,Motor,4xTire reserved).");
+ 			logger.debug("CarBody:<"+carBody.getId()+">, Producer:<"+carBody.getProducerId()+">");
+ 			logger.debug("CarMotor:<"+carMotor.getId()+">, Producer:<"+carMotor.getProducerId()+">");
+ 			//save back to in-memory-DB but not in free LIST, into used List
+ 			CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
+ 			CarPartDaoSimpleImpl.getInstance().saveCarMotor(carMotor);
+ 			
+ 			
+ 			List<CarPartDTO> carTireDTOs = new ArrayList<CarPartDTO>();
+ 			
+ 			for(CarTire carTire: carTires) {
+ 				logger.debug("CarTire:<"+carTire.getId()+">, Producer:<"+carTire.getProducerId()+">");
+ 				
+ 				CarPartDTO carTireDTO = new CarPartDTO();
+ 				carTireDTO.setId(carTire.getId());
+     			carTireDTO.setProducerId(carTire.getProducerId());
+     			
+     			carTireDTOs.add(carTireDTO);
+     			
+ 				CarPartDaoSimpleImpl.getInstance().saveCarTire(carTire);
+ 			}
+ 			
+ 			//create Data Transfer Object (minimal objects containing only IDs...)
+ 			CarDTO carDTO = new CarDTO();
+ 			
+ 			CarPartDTO carBodyDTO = new CarPartDTO();
+ 			carBodyDTO.setId(carBody.getId());
+ 			carBodyDTO.setBodyColor(carBody.getColor());
+ 			carBodyDTO.setPainterId(carBody.getPainterWorkerId());
+ 			carBodyDTO.setProducerId(carBody.getProducerId());
+ 			
+ 			carDTO.setCarBody(carBodyDTO);
+ 			
+ 			CarPartDTO carMotorDTO = new CarPartDTO();
+ 			carMotorDTO.setId(carMotor.getId());
+ 			carMotorDTO.setProducerId(carMotor.getProducerId());
+ 			
+ 			carDTO.setCarMotor(carMotorDTO);
+ 			
+ 			carDTO.setCarTires(carTireDTOs);
+ 			
+ 			Car car = new Car(carBody, carMotor, carTires);
+ 			CarDaoSimpleImpl.getInstance().saveCarToAssemble(car);
+ 			
+ 			if(car.getId() != null) {
+ 				carDTO.setId(car.getId());
+ 				
+ 			}
+ 			
+ 			//send carDTO to assemblingJobQueue
+ 			
+ 			outObjectMessage = session.createObjectMessage(carDTO);
+ 			producerAssemblingJob.send(outObjectMessage);
+
+ 		} else if (carBody != null && carBody.getColor() == null) {
+ 			//PainterJob for single Body is available
+ 			logger.debug("<"+this.hashCode()+">: PainterJob is possible (CarBody<"+carBody.getId()+"> reserved).");
+ 			
+ 			//save back to in-memory-DB but not in free LIST, into used CarPart List
+ 			CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
+ 			
+ 			//save Motor and Tires into Free list since not USED for PainterJob Creation!
+ 			if(carMotor != null) {
+ 				CarPartDaoSimpleImpl.getInstance().saveFreeCarMotor(carMotor);
+ 			}
+ 			
+ 			for(CarTire carTire: carTires) {
+ 				CarPartDaoSimpleImpl.getInstance().saveFreeCarTire(carTire);
+ 			}
+ 			
+ 			CarPartDTO carBodyDTO = new CarPartDTO();
+ 			carBodyDTO.setId(new Long(carBody.getId()));
+ 			carBodyDTO.setCarPartType(carBody.getCarPartType());
+ 			carBodyDTO.setProducerId(carBody.getProducerId());
+ 			
+ 			//send carBodyDTO to painterJobQueue
+ 			
+ 			outObjectMessage = session.createObjectMessage(carBodyDTO);
+ 			outObjectMessage.setStringProperty("type", "carBody");
+ 			producerPainterJob.send(outObjectMessage);
+ 			
+ 			logger.debug("JobManagementListener<"+this.toString()+">: PainterJob with CarBody<"+carBodyDTO.getId()+"> is send out to QUEUE");
+ 			
+ 		} else {
+ 			//save back to in-memory-DB in free LIST since no match and give up reserved ones!
+ 		
+ 			if(carBody != null) {
+ 				CarPartDaoSimpleImpl.getInstance().saveFreeCarBody(carBody);
+ 			}
+ 			//save Motor and Tires into Free list since not USED for PainterJob Creation!
+ 			if(carMotor != null) {
+ 				CarPartDaoSimpleImpl.getInstance().saveFreeCarMotor(carMotor);
+ 			}
+ 			
+ 			for(CarTire carTire: carTires) {
+ 				CarPartDaoSimpleImpl.getInstance().saveFreeCarTire(carTire);
+ 			}
+ 		}
+		
+	}
+
+	/**
      * Closes the connection.
      */
     @PreDestroy

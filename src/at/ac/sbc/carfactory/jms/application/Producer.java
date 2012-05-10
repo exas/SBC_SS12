@@ -35,19 +35,22 @@ public class Producer implements Runnable{
 	private boolean running = true;
 	private SynchronousQueue<WorkTask> tasks;
 	
-	private ConnectionFactory cf;
-	private Connection connection;
-	private Session session;
-	//TASK QUEUE
+	private ConnectionFactory cf = null;
+	private Connection connection = null;
+	private Session session = null;
+
 	private Queue carPartQueue = null;
-
+	private Queue updateGUIQueue = null;
+	
+	private MessageProducer producerUpdateGUI = null;
+	private MessageProducer producerCarPart = null;
+	
 	private Logger logger = Logger.getLogger(Producer.class);
-
+	private Context context;
+	
 	public Producer(long id) throws CarFactoryException {
 		this.id = id;
 		this.init();
-		
-		//new Thread(this).start();
 	}
 	
 	private void init() {
@@ -62,18 +65,15 @@ public class Producer implements Runnable{
         env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
 
 		try {
-			Context context = new InitialContext(env);	
+			context = new InitialContext(env);	
 			this.cf = (ConnectionFactory)context.lookup("/cf");
 			this.carPartQueue = (Queue)context.lookup("/queue/carPartQueue");
+			this.updateGUIQueue = (Queue)context.lookup("/queue/updateGUIQueue");
+		
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
-		 
-//		this.cf = (ConnectionFactory) JMSServer.getInstance().lookup("/ConnectionFactory"); 
-//		this.carPartQueue = (Queue) JMSServer.getInstance().lookup("/queue/carPartQueue");
 	}
 	
 	@Override
@@ -105,6 +105,10 @@ public class Producer implements Runnable{
 			connection = cf.createConnection();
 			session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 			
+			//  Create a JMS Message Producer to send a message on the queue
+			producerCarPart = session.createProducer(carPartQueue);
+			producerUpdateGUI = session.createProducer(updateGUIQueue);
+						
 			for (int i = 0; i < task.getNumParts(); i++)
 			{
 				//get random value for between 1-3 sec. as work time
@@ -132,9 +136,6 @@ public class Producer implements Runnable{
 				
 				ObjectMessage outObjectMessage = null;
 				
-				//  Create a JMS Message Producer to send a message on the queue
-				MessageProducer producer = session.createProducer(carPartQueue);
-				
             	outObjectMessage = session.createObjectMessage();
             	outObjectMessage.setObject(carPartDTO);
             	outObjectMessage.setStringProperty("type", "newProducedCarPart");
@@ -142,7 +143,11 @@ public class Producer implements Runnable{
             	//outObjectMessage.setStringProperty("type", "carPartType?");
             	logger.debug("Producer <"+this.id+">: Finished producing <"+task.getCarPartTyp().toString()+">. Send Message to CarPartQueue." );
 				//send it using the producer
-				producer.send(outObjectMessage);
+            	producerCarPart.send(outObjectMessage);
+				
+				//update GUI
+    			producerUpdateGUI.send(outObjectMessage);
+    			logger.debug("<"+this.getId()+">: CarBody is painted - Update GUI Queue, Msg sent.");
 
 			}
 		} catch (InterruptedException e) {
@@ -153,19 +158,12 @@ public class Producer implements Runnable{
 			e.printStackTrace();
 		} finally {
 			//JMS close connection and session
-				try {
-					logger.debug("Closing Connection and Session!");
-					if(connection != null) {
-						connection.close();
-					}
-					if (session != null) {
-						session.close();
-					}
-				} catch (JMSException e) {
-					logger.error("Error");
-					e.printStackTrace();
-				}
-			}
+			logger.info("Closing Session and then connection!");
+			try { if( producerCarPart != null ) producerCarPart.close();  } catch( Exception ex ) {/*ok*/}
+			try { if( producerUpdateGUI != null ) producerUpdateGUI.close();  } catch( Exception ex ) {/*ok*/}
+			try { if( session != null ) session.close();  } catch( Exception ex ) {/*ok*/}
+		    try { if( connection != null ) connection.close();  } catch( Exception ex ) {/*ok*/}
+		}
 		
 	}
 	
@@ -180,6 +178,8 @@ public class Producer implements Runnable{
 
 	public void shutdown() {
 		this.running = false;
+		
+		try { if( context != null ) context.close(); } catch( Exception ex ) {/*ok*/}
 	}
 
 	public Long getId() {

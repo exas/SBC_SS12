@@ -1,6 +1,5 @@
 package at.ac.sbc.carfactory.jms.worker;
 
-
 import java.util.Hashtable;
 import java.util.Scanner;
 import org.apache.log4j.Logger;
@@ -19,10 +18,7 @@ import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
-import at.ac.sbc.carfactory.domain.CarColor;
-import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.jms.dto.CarDTO;
-import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
 
 public class Logistician extends Worker implements MessageListener, ExceptionListener {
 	
@@ -32,31 +28,31 @@ public class Logistician extends Worker implements MessageListener, ExceptionLis
 	private Queue updateGUIQueue;
 	private Queue assembledCarQueue;
 	private MessageConsumer messageConsumer;
+	private Context context;
 	
 	private final static Logger logger = Logger.getLogger(Logistician.class);
 	
 	public Logistician(long id) {
 		super(id);
-		this.setup();
+		this.startListening();
 	}
 		
-	public void setup() {
+	public void startListening() {
         try {
         	Hashtable<String, String> env = new Hashtable<String, String>();
             env.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
             env.put("java.naming.provider.url", "jnp://localhost:1099");
             env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
-            Context context = new InitialContext(env);
+            context = new InitialContext(env);
             
     		this.cf = (ConnectionFactory)context.lookup("/cf");
         	//TODO connect to server do not create a new Server Instance!
     		this.assembledCarQueue = (Queue) context.lookup("/queue/assembledCarQueue");
-    		this.updateGUIQueue = (Queue) context.lookup("/queue/updateGUI");
+    		this.updateGUIQueue = (Queue) context.lookup("/queue/updateGUIQueue");
 
             
             connection = cf.createConnection();
             
-          //TODO check at every listener if this is necessary since in onMessage i create again a Session??
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             
             //listens to painterJobQueue
@@ -82,23 +78,15 @@ public class Logistician extends Worker implements MessageListener, ExceptionLis
 		
 		ObjectMessage inObjectMessage = null;
     	ObjectMessage outObjectMessage = null;
-    	//Session session = null;
+    	
         MessageProducer producerUpdateGUI = null;
         
         try {
-        	//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            
+
         	producerUpdateGUI = session.createProducer(updateGUIQueue);
 
         	if (inMessage instanceof ObjectMessage) {
     			inObjectMessage = (ObjectMessage) inMessage;
-            	
-    			//Queue Browser to get first types of assembled Car or CarPart to paint!
-    			//TODO Preference, if not possible via QueueSelector then two Queues?
-    			
-    			//carDTO Type
-    			//inMessage.getStringProperty("type").equals("assembledCar")
-    			//inMessage.getStringProperty("type").equals("carPart")
     			
     			if (inObjectMessage.getObject() instanceof CarDTO) {
 	    			CarDTO carDTO = (CarDTO)inObjectMessage.getObject();
@@ -113,6 +101,8 @@ public class Logistician extends Worker implements MessageListener, ExceptionLis
             			producerUpdateGUI.send(outObjectMessage);
             			
             			logger.debug("<"+this.getId()+">: AssembledCar with Car<"+carDTO.getId()+"> is send out and finished. Updating GUI via Message.");
+            			
+            			//TODO Correct behaviour would be update DB via Queue and then inform GUI Queue from Server
 					}
 				} 
         	}
@@ -124,9 +114,18 @@ public class Logistician extends Worker implements MessageListener, ExceptionLis
         } catch (Throwable te) {
         	logger.error("onMessage: Exception: " + te.toString());
             te.printStackTrace();
-        }
-        
-        
+        } finally {
+			//JMS close connection and session
+			logger.info("JMS:Closing Message Producers!");
+			try { if( producerUpdateGUI != null ) producerUpdateGUI.close();  } catch( Exception ex ) {/*ok*/}
+		}
+	}
+	
+	public void stopListening() {
+		try { if( messageConsumer != null ) messageConsumer.close(); } catch( Exception ex ) {/*ok*/}
+	    try { if( session != null ) session.close();  } catch( Exception ex ) {/*ok*/}
+	    try { if( connection != null ) connection.close();  } catch( Exception ex ) {/*ok*/}
+	    try { if( context != null ) context.close(); } catch( Exception ex ) {/*ok*/}
 	}
 
 	public static void main(String[] args) {
@@ -142,13 +141,16 @@ public class Logistician extends Worker implements MessageListener, ExceptionLis
 			 System.exit(-2);
 		 }
 		 
-		@SuppressWarnings("unused")
 		Logistician logistician = new Logistician(id);
 		
 		logger.info("Enter 'quit' to exit LogisticianWorker...");
 		Scanner sc = new Scanner(System.in);
 	    
 		while(!sc.nextLine().equals("quit"));
+		
+		logistician.stopListening();
+		logger.info("Stopped Listening properly.");
+		
 		logger.info("LogisticianWorker exited.");
 	}
 
