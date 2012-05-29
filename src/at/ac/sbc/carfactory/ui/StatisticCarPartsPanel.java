@@ -11,8 +11,11 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.table.DefaultTableModel;
 
 import at.ac.sbc.carfactory.domain.CarBody;
+import at.ac.sbc.carfactory.domain.CarColor;
+import at.ac.sbc.carfactory.domain.CarMotor;
 import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.CarPartType;
+import at.ac.sbc.carfactory.domain.CarTire;
 import at.ac.sbc.carfactory.ui.util.TableHeaders;
 
 public class StatisticCarPartsPanel extends JPanel {
@@ -73,6 +76,10 @@ public class StatisticCarPartsPanel extends JPanel {
 					temp[3] = "Painted: " + ((CarBody)part).getPainterWorkerId() + " " + ((CarBody)part).getColor();
 				}
 			}
+			
+			if (Class.forName(CarMotor.class.getName()).isInstance(part)) {
+				temp[3] = "Motor_Type:" + ((CarMotor)part).getMotorType();
+			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -90,17 +97,56 @@ public class StatisticCarPartsPanel extends JPanel {
 			}
 			this.tableModel.fireTableDataChanged();
 		}
-		
-
+	}
+	
+	public CarPart getCarPart(long carPartId, CarPartType carPartType) {
+		int carPartRow = this.findCarPart(carPartId, carPartType);
+		if(carPartRow != -1) {
+			CarPart carPart = null;
+			switch(carPartType) {
+				case CAR_MOTOR:
+					carPart = new CarMotor();
+					carPart.setId(carPartId);
+					carPart.setCarPartType(carPartType);
+					carPart.setProducerId((Long)table.getValueAt(carPartRow, 2));
+					break;
+				case CAR_BODY:
+					carPart = new CarBody();
+					carPart.setId(carPartId);
+					carPart.setCarPartType(carPartType);
+					carPart.setProducerId((Long)table.getValueAt(carPartRow, 2));
+					String paintedString = (String)table.getValueAt(carPartRow, 3);
+					if((paintedString != null) && (paintedString.equals("") == false)) {
+						Object[] painted = paintedString.split(" ");
+						((CarBody)carPart).setPainterWorkerId((Long)painted[1]);
+						((CarBody)carPart).setColor((CarColor)painted[2]);
+					}
+					break;
+				case CAR_TIRE:
+					carPart = new CarTire();
+					carPart.setId(carPartId);
+					carPart.setCarPartType(carPartType);
+					carPart.setProducerId((Long)table.getValueAt(carPartRow, 2));
+					break;
+				default: 
+					//DO NOTHING
+			}
+			return carPart;
+		}
+		return null;
 	}
 
 	private int findCarPart(CarPart part) {
+		return this.findCarPart(part.getId(), part.getCarPartType());
+	}
+	
+	private int findCarPart(long carPartId, CarPartType carPartType) {
 		int nRow = tableModel.getRowCount();
 		//int nCol = tableModel.getColumnCount();
 		//Object[][] tableData = new Object[nRow][nCol];
 		for (int i = 0; i < nRow; i++) {
-			if (((Long) tableModel.getValueAt(i, 0) == part.getId())
-					&& (((CarPartType) tableModel.getValueAt(i, 1)).equals(part.getCarPartType()))) {
+			if (((Long) tableModel.getValueAt(i, 0) == carPartId)
+					&& (((CarPartType) tableModel.getValueAt(i, 1)).equals(carPartType))) {
 				return i;
 			}
 			/*

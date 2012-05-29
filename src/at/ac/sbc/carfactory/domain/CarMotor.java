@@ -3,6 +3,7 @@ package at.ac.sbc.carfactory.domain;
 public class CarMotor extends CarPart {
 
 	private static final long serialVersionUID = 5306530929885189479L;
+	private CarMotorType motorType;
 
 	public CarMotor() {
 		this.carPartType = CarPartType.CAR_MOTOR;
@@ -20,7 +21,13 @@ public class CarMotor extends CarPart {
 		return CarPartType.CAR_MOTOR;
 	}
 	
-	
+	public CarMotorType getMotorType() {
+		return motorType;
+	}
+
+	public void setMotorType(CarMotorType motorType) {
+		this.motorType = motorType;
+	}
 	
 	
 }

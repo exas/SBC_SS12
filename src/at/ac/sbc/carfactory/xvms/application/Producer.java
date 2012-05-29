@@ -2,6 +2,8 @@ package at.ac.sbc.carfactory.xvms.application;
 
 import org.apache.log4j.Logger;
 
+import at.ac.sbc.carfactory.domain.CarMotor;
+import at.ac.sbc.carfactory.domain.CarMotorType;
 import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.CarPartType;
 import at.ac.sbc.carfactory.util.CarFactoryException;
@@ -12,6 +14,7 @@ import at.ac.sbc.carfactory.xvms.util.WorkTaskLabel;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -68,7 +71,8 @@ public class Producer implements Runnable {
 						label = WorkTaskLabel.CAR_BODY; 
 						break;
 					case CAR_MOTOR: 
-						label = WorkTaskLabel.CAR_MOTOR; 
+						label = WorkTaskLabel.CAR_MOTOR;
+						((CarMotor)carPart).setMotorType(CarMotorType.values()[(new Random()).nextInt(CarMotorType.values().length)]);
 						break;
 					case CAR_TIRE: 
 						label = WorkTaskLabel.CAR_TIRE; 

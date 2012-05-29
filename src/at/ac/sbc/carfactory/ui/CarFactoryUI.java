@@ -139,6 +139,10 @@ public class CarFactoryUI extends View implements DomainListener, LogListener, W
 	public boolean assignWorkToProducer(long id, int numParts, CarPartType carPartType) {
 		return this.model.assignWorkToProducer(numParts, carPartType, id);
 	}
+	
+	public CarPart getCarPart(long carPartID, CarPartType carPartType) {
+		return this.statisticCarPartsPanel.getCarPart(carPartID, carPartType);
+	}
 
 	@Override
 	public void logMessageAdded(String message) {
