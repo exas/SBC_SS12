@@ -76,7 +76,7 @@ public class StatisticCarPartsPanel extends JPanel {
 					temp[3] = "Painted: " + ((CarBody)part).getPainterWorkerId() + " " + ((CarBody)part).getColor();
 				}
 			}
-			
+
 			if (Class.forName(CarMotor.class.getName()).isInstance(part)) {
 				temp[3] = "Motor_Type:" + ((CarMotor)part).getMotorType();
 			}
@@ -86,7 +86,7 @@ public class StatisticCarPartsPanel extends JPanel {
 		if(finished == true) {
 			temp[4] = "finished";
 		}
-		
+
 		if(row == -1) {
 			this.tableModel.addRow(temp);
 			this.tableModel.fireTableDataChanged();
@@ -98,7 +98,7 @@ public class StatisticCarPartsPanel extends JPanel {
 			this.tableModel.fireTableDataChanged();
 		}
 	}
-	
+
 	public CarPart getCarPart(long carPartId, CarPartType carPartType) {
 		int carPartRow = this.findCarPart(carPartId, carPartType);
 		if(carPartRow != -1) {
@@ -117,9 +117,9 @@ public class StatisticCarPartsPanel extends JPanel {
 					carPart.setProducerId((Long)table.getValueAt(carPartRow, 2));
 					String paintedString = (String)table.getValueAt(carPartRow, 3);
 					if((paintedString != null) && (paintedString.equals("") == false)) {
-						Object[] painted = paintedString.split(" ");
-						((CarBody)carPart).setPainterWorkerId((Long)painted[1]);
-						((CarBody)carPart).setColor((CarColor)painted[2]);
+						String[] painted = paintedString.split(" ");
+						((CarBody)carPart).setPainterWorkerId(Long.valueOf(painted[1].trim()));
+						((CarBody)carPart).setColor(CarColor.valueOf(painted[2].trim()));
 					}
 					break;
 				case CAR_TIRE:
@@ -128,7 +128,7 @@ public class StatisticCarPartsPanel extends JPanel {
 					carPart.setCarPartType(carPartType);
 					carPart.setProducerId((Long)table.getValueAt(carPartRow, 2));
 					break;
-				default: 
+				default:
 					//DO NOTHING
 			}
 			return carPart;
@@ -139,7 +139,7 @@ public class StatisticCarPartsPanel extends JPanel {
 	private int findCarPart(CarPart part) {
 		return this.findCarPart(part.getId(), part.getCarPartType());
 	}
-	
+
 	private int findCarPart(long carPartId, CarPartType carPartType) {
 		int nRow = tableModel.getRowCount();
 		//int nCol = tableModel.getColumnCount();

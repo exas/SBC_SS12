@@ -40,15 +40,15 @@ public class AssignWorkPanel extends JDialog {
 		}
 		final JComboBox carPartList = new JComboBox(carPartTypes);
 		carPartList.setSelectedIndex(0);
-		
-		Integer[] array = {1,2,3,4,5,6,7,8,9};
+
+		Integer[] array = {1,2,3,4,5,6,7,8,9, 2000, 8000};
 
 		final JComboBox numPartList = new JComboBox(array);
 		numPartList.setSelectedIndex(0);
 
 		JButton assignWorkBt = new JButton("AssignWork");
 		//TODO ?? really necessary? track dialogs via CarFactoryUI so we can access them from outside (-> Controller)!
-		
+
 		assignWorkBt.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

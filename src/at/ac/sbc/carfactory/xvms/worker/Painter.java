@@ -169,14 +169,14 @@ public class Painter extends Worker {
 		 
 		 Painter painter = new Painter(id, color);
 		 while(true) {
-			 painter.paintCar();
-			/* painter.processCarBody();
+			 //painter.paintCar();
+			 painter.processCarBody();
 			try {
 				Thread.sleep(10000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}*/
+			}
 		 }
 	}
 

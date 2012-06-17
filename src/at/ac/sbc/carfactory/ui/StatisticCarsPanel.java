@@ -48,24 +48,33 @@ public class StatisticCarsPanel extends JPanel {
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
 		c.anchor = GridBagConstraints.LINE_START; c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 0.7; c.gridwidth = 1;
+		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 0.65; c.gridwidth = 1;
 		this.add(tableScrollPane, c);
-		
+
 		carInfoTextArea = new JTextArea();
 		this.carInfoTextArea.setEditable(false);
 		JScrollPane carInfoTextAreaScrollPane = new JScrollPane(this.carInfoTextArea);
-		
+
 		c.anchor = GridBagConstraints.LINE_START; c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 1; c.weightx = 1; c.weighty = 0.3; c.gridwidth = 1;
+		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 1; c.weightx = 1; c.weighty = 0.35; c.gridwidth = 1;
 		this.add(carInfoTextAreaScrollPane, c);
 	}
 
 	private JTable initStatisticsTable() {
 		if (table == null) {
 			table = new JTable();
-			tableModel = new DefaultTableModel(null, TableHeaders.statisticFinishedCars);
+			tableModel = new DefaultTableModel(null, TableHeaders.statisticFinishedCars) {
+
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public boolean isCellEditable(int row, int column) {
+					//all cells false
+				    return false;
+			    }
+			};
+
 			table.setModel(tableModel);
-			
 			table.addMouseListener(new MouseAdapter() {
 				private void maybeShowInfo(MouseEvent e) {
 					if (e.isPopupTrigger() && table.isEnabled()) {
@@ -76,14 +85,14 @@ public class StatisticCarsPanel extends JPanel {
 
 						// translate table index to model index
 						int mcol = table.getColumn(table.getColumnName(col)).getModelIndex();
-			
+
 						if (row >= 0 && row < table.getRowCount()) {
 							// update info area
 							updateCarInfoArea(row);
 						}
 					}
 				}
-	
+
 				@Override
 				public void mousePressed(MouseEvent e) {
 					maybeShowInfo(e);
@@ -97,49 +106,93 @@ public class StatisticCarsPanel extends JPanel {
 		}
 		return table;
 	}
-	
+
 	public void updateCarInfoArea(int rowIndex) {
-		int carID = (Integer)table.getValueAt(rowIndex, 0);
-		int bodyID = (Integer)table.getValueAt(rowIndex, 1);
-		int motorID = (Integer)table.getValueAt(rowIndex, 2);
+		Long carID = (Long)table.getValueAt(rowIndex, 0);
+		Long bodyID = (Long)table.getValueAt(rowIndex, 1);
+		Long motorID = (Long)table.getValueAt(rowIndex, 2);
 		String tireIDs = (String)table.getValueAt(rowIndex, 3);
-		int assemblerID = (Integer)table.getValueAt(rowIndex, 4);
-		String logisticianID = (String)table.getValueAt(rowIndex, 5);
-		
+		Long assemblerID = (Long)table.getValueAt(rowIndex, 4);
+		Long logisticianID = (Long)table.getValueAt(rowIndex, 5);
+
 		this.carInfoTextArea.setText("");
-		this.carInfoTextArea.append("Car: " + carID + "\n");
-		
+		//this.carInfoTextArea.append("Car [" + carID + "]");
+
+		String line1_carText = "";
+		String line2_assemblerText = "\n";
+		String line3_logisticianText = "\n";
+		String line4_carBodyText =  "\n    ";
+		String line5_carMotorText = "\n    ";
+		String line6_carTiresText = "\n    ";
+
+		line1_carText += "Car [" + carID + "]: { Assembler["+assemblerID+"], ";
+
+		if((logisticianID != null) && (logisticianID.equals("") == false)) {
+			line1_carText += "Logistician[" + logisticianID + "], CarParts::";
+		}
+
 		CarBody carBody = (CarBody)this.parent.getCarPart(bodyID, CarPartType.CAR_BODY);
 		if(carBody != null) {
-			this.carInfoTextArea.append("\tBody: " + bodyID + "\n");
-			this.carInfoTextArea.append("\t\tProducer: " + carBody.getProducerId() + "\n");
+			line1_carText += "Body["+bodyID+"], ";
+			line4_carBodyText += "Body["+bodyID+"]: { Producer["+carBody.getProducerId()+"], ";
+
+			//this.carInfoTextArea.append("\tBody: " + bodyID + "\n");
+			//this.carInfoTextArea.append("\t\tProducer: " + carBody.getProducerId() + "\n");
 			if(carBody.isPainted() == true) {
-				this.carInfoTextArea.append("\t\tColor: " + carBody.getColor() + "\n");
-				this.carInfoTextArea.append("\t\tPainter: " + carBody.getPainterWorkerId() + "\n");
+				line4_carBodyText += "Painter["+carBody.getPainterWorkerId()+"], Color: " + carBody.getColor() + " }";
+				//this.carInfoTextArea.append("\t\tColor: " + carBody.getColor() + "\n");
+				//this.carInfoTextArea.append("\t\tPainter: " + carBody.getPainterWorkerId() + "\n");
 			}
 		}
 		CarMotor carMotor = (CarMotor)this.parent.getCarPart(motorID, CarPartType.CAR_MOTOR);
 		if(carMotor != null) {
-			this.carInfoTextArea.append("\tMotor: " + motorID + "\n");
-			this.carInfoTextArea.append("\t\tProducer: " + carMotor.getProducerId() + "\n");
-			this.carInfoTextArea.append("\t\tType: " + carMotor.getMotorType() + "\n");
+			line1_carText += "Motor["+motorID+"], ";
+
+			line5_carMotorText += "Motor["+motorID+"]: { Producer["+carMotor.getProducerId()+"], ";
+			line5_carMotorText += "Type: "+carMotor.getMotorType()+ " }";
+
+			//this.carInfoTextArea.append("\tMotor: " + motorID + "\n");
+			//this.carInfoTextArea.append("\t\tProducer: " + carMotor.getProducerId() + "\n");
+			//this.carInfoTextArea.append("\t\tType: " + carMotor.getMotorType() + "\n");
 		}
-		
-		this.carInfoTextArea.append("\tTires: \n");
+
+		//this.carInfoTextArea.append("\tTires: \n");
+		line6_carTiresText += "CarTires: {";
 		String[] tireIDsArr = tireIDs.split(",");
 		for(int i = 0; i < tireIDsArr.length; i++) {
-			CarTire carTire = (CarTire)this.parent.getCarPart(Long.parseLong(tireIDsArr[i]), CarPartType.CAR_TIRE);
+			CarTire carTire = (CarTire)this.parent.getCarPart(Long.parseLong(tireIDsArr[i].trim()), CarPartType.CAR_TIRE);
 			if(carTire != null) {
-				this.carInfoTextArea.append("\t\tTire: " + tireIDsArr[i] + "\n");
-				this.carInfoTextArea.append("\t\t\tProducer: " + carTire.getProducerId() + "\n");
+				line1_carText += "T["+carTire.getId()+"], ";
+				line6_carTiresText += " T["+carTire.getId() +"]: {Prod["+carTire.getProducerId()+"]}, ";
+
+				//this.carInfoTextArea.append("\t\tTire: " + carTire.getId() + "\n");
+				//this.carInfoTextArea.append("\t\t\tProducer: " + carTire.getProducerId() + "\n");
 			}
 		}
-		
-		this.carInfoTextArea.append("\tAssembler: " + assemblerID + "\n");
-		
+		//delete last , and space
+		line6_carTiresText = line6_carTiresText.substring(0,line6_carTiresText.length()-2);
+		line6_carTiresText += " }\n";
+
+		line1_carText = line1_carText.substring(0,line1_carText.length()-2);
+		line1_carText += " }";
+
+
+
+
+		//this.carInfoTextArea.append("\tAssembler: " + assemblerID + "\n");
+		//line2_assemblerText += "Assembler["+assemblerID+"]";
+
 		if((logisticianID != null) && (logisticianID.equals("") == false)) {
-			this.carInfoTextArea.append("\tLogistician: " + logisticianID + "\n");
+			//this.carInfoTextArea.append("\tLogistician: " + logisticianID + "\n");
+			line3_logisticianText += "Logistician["+logisticianID+"]";
 		}
+
+		this.carInfoTextArea.append(line1_carText);
+		//this.carInfoTextArea.append(line2_assemblerText);
+		//this.carInfoTextArea.append(line3_logisticianText);
+		this.carInfoTextArea.append(line4_carBodyText);
+		this.carInfoTextArea.append(line5_carMotorText);
+		this.carInfoTextArea.append(line6_carTiresText);
 
 	}
 
@@ -158,7 +211,7 @@ public class StatisticCarsPanel extends JPanel {
 				temp[3] = (String)temp[3] + car.getTires().get(i).getId() + ", ";
 			}
 		}
-		
+
 		temp[4] = car.getAssemblyWorkerId();
 		temp[5] = car.getLogisticWorkerId();
 		if(temp[5] != null) {
@@ -175,7 +228,7 @@ public class StatisticCarsPanel extends JPanel {
 			}
 			this.tableModel.fireTableDataChanged();
 		}
-		
+
 
 	}
 
