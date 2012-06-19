@@ -1,5 +1,7 @@
 package at.ac.sbc.carfactory.jms.dto;
 
+import at.ac.sbc.carfactory.domain.CarMotorType;
+
 import at.ac.sbc.carfactory.domain.CarColor;
 import at.ac.sbc.carfactory.domain.CarPartType;
 
@@ -8,16 +10,17 @@ import at.ac.sbc.carfactory.domain.CarPartType;
 public class CarPartDTO implements java.io.Serializable{
 
 	private static final long serialVersionUID = 1L;
-	
+
 	private Long id;
 	private Long producerId;
 	private CarPartType carPartType;
 	private CarColor bodyColor;
 	private Long painterId;
-	
+	private boolean isDefect;
 	private Long carId;
-	
-	
+	private CarMotorType carMotorType;
+
+
 	public Long getId() {
 		return id;
 	}
@@ -54,7 +57,19 @@ public class CarPartDTO implements java.io.Serializable{
 	public void setCarId(Long carId) {
 		this.carId = carId;
 	}
+	public void setIsDefect(boolean isDefect) {
+		this.isDefect = isDefect;
+	}
+	public boolean isDefect() {
+		return isDefect;
+	}
+	public CarMotorType getCarMotorType() {
+		return carMotorType;
+	}
+	public void setCarMotorType(CarMotorType carMotorType) {
+		this.carMotorType = carMotorType;
+	}
 
 
-	
+
 }

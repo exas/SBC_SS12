@@ -8,21 +8,21 @@ import java.util.List;
 public class CarDTO implements java.io.Serializable{
 
 	private static final long serialVersionUID = 1L;
-	
+
 	private Long id;
-	
+
 	private CarPartDTO carBody;
 	private CarPartDTO carMotor;
 	private List<CarPartDTO> carTires;
-	
+
 	private Long assemblyWorkerId;
 	private Long logisticWorkerId;
-	
+	private boolean isDefect;
 
 	public CarDTO() {
 
 	}
-	
+
 	public Long getId() {
 		return id;
 	}
@@ -38,7 +38,7 @@ public class CarDTO implements java.io.Serializable{
 	public void setAssemblyWorkerId(Long assemblyWorkerId) {
 		this.assemblyWorkerId = assemblyWorkerId;
 	}
-	
+
 	public Long getLogisticWorkerId() {
 		return logisticWorkerId;
 	}
@@ -70,8 +70,16 @@ public class CarDTO implements java.io.Serializable{
 	public void setCarTires(List<CarPartDTO> carTires) {
 		this.carTires = carTires;
 	}
-	
 
-	
-	
+	public boolean isDefect() {
+		return isDefect;
+	}
+
+	public void setDefect(boolean isDefect) {
+		this.isDefect = isDefect;
+	}
+
+
+
+
 }

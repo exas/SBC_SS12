@@ -11,6 +11,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import at.ac.sbc.carfactory.domain.CarColor;
+import at.ac.sbc.carfactory.domain.CarMotorType;
+import at.ac.sbc.carfactory.domain.Order;
+
 import org.mozartspaces.core.Entry;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.notifications.Notification;
@@ -38,9 +42,9 @@ import org.apache.log4j.Logger;
 /**
  * class handles connection to space as well as storing information about the
  * overall facility. Furthermore it creates the producer-threads
- * 
+ *
  * @author spookyTU
- * 
+ *
  */
 public class CarFactoryManager extends Model implements NotificationListener {
 
@@ -57,7 +61,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 	private List<LogListener> logListeners;
 	private List<DomainListener> domainListeners;
 	private SpaceUtil space;
-	
+
 	private Logger logger = Logger.getLogger(CarFactoryManager.class);
 
 	public CarFactoryManager() {
@@ -69,7 +73,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		// ExecutorService executorService = Executors.newCachedThreadPool();
 		this.initSpace();
 		this.initNotificationManager();
-		
+
 		logger.debug("CarFactoryManager instantiated");
 		this.log("CarFactoryManager instantiated");
 	}
@@ -101,7 +105,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 			this.log(e.getMessage());
 		}
 	}
-	
+
 	@Override
 	public long createProducer() {
 		long id = this.idCounter;
@@ -122,12 +126,12 @@ public class CarFactoryManager extends Model implements NotificationListener {
 	}
 
 	@Override
-	public long createProducer(int numParts, CarPartType carPart) {
+	public long createProducer(int numParts, Double errorRate, CarPartType carPartType) {
 		long id = this.createProducer();
 		if(id == -1) {
 			return id;
 		}
-		this.assignWorkToProducer(numParts, carPart, id);
+		this.assignWorkToProducer(numParts, errorRate, carPartType, id);
 		return id;
 	}
 
@@ -138,7 +142,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean shutdown() {
 		System.out.println("Number of Producers: " + this.producers.size());
@@ -156,7 +160,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		System.out.println("Notified: " + notif + " with operation: " + oper + " on:" + objs);
 		this.updatedDomainObjects(((Entry)objs.get(0)).getValue());
 	}
-	
+
 	private void updatedDomainObjects(Serializable obj) {
 		if(this.domainListeners == null || this.domainListeners.size() == 0) {
 			return;
@@ -172,13 +176,13 @@ public class CarFactoryManager extends Model implements NotificationListener {
 					this.domainListeners.get(i).carPartUpdated(((Car)obj).getTires().get(j), true);
 				}
 				this.domainListeners.get(i).carUpdated((Car)obj);
-			
+
 			}
 		}
 	}
 
 	@Override
-	public boolean assignWorkToProducer(int numParts, CarPartType carPartType, long producerID) {
+	public boolean assignWorkToProducer(int numParts, Double errorRate, CarPartType carPartType, long producerID) {
 
 		Producer producer = this.producers.get(producerID);
 		if (producer == null) {
@@ -186,10 +190,11 @@ public class CarFactoryManager extends Model implements NotificationListener {
 			this.log("AssignWorkError: Could not find producer with id " + producerID);
 			return false;
 		}
+
 		producer.addProducerTasks(this.createCarParts(numParts, carPartType));
 		return true;
 	}
-	
+
 	private List<CarPart> createCarParts(int numParts, CarPartType carPartType) {
 		List<CarPart> carParts = new ArrayList<CarPart>();
 		for(int i = numParts; i > 0; i--) {
@@ -226,7 +231,7 @@ public class CarFactoryManager extends Model implements NotificationListener {
 		this.shutdownProducer(id);
 		return true;
 	}
-	
+
 	@Override
 	public void log(String message) {
 		//Logger.getLogger(CarFactoryManager.class.getName()).log(Level.INFO, message, message);
@@ -251,5 +256,12 @@ public class CarFactoryManager extends Model implements NotificationListener {
 			this.domainListeners = new ArrayList<DomainListener>();
 		}
 		this.domainListeners.add(listener);
+	}
+
+	@Override
+	public Order createOrder(Integer carAmount, CarMotorType carMotorType,
+			CarColor carColor) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

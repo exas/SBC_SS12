@@ -10,6 +10,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import at.ac.sbc.carfactory.domain.CarColor;
+import at.ac.sbc.carfactory.domain.CarMotorType;
+
+import at.ac.sbc.carfactory.domain.Order;
+
 
 import org.apache.log4j.Logger;
 
@@ -20,14 +25,13 @@ import at.ac.sbc.carfactory.domain.WorkTask;
 import at.ac.sbc.carfactory.jms.application.Producer;
 
 import at.ac.sbc.carfactory.ui.util.Model;
-import at.ac.sbc.carfactory.util.CarFactoryException;
 import at.ac.sbc.carfactory.util.DomainListener;
 import at.ac.sbc.carfactory.util.LogListener;
 
 /**
- * 
+ *
  * @author exas
- * 
+ *
  */
 public class CarFactoryManager extends Model {
 
@@ -38,34 +42,40 @@ public class CarFactoryManager extends Model {
 	private final ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(poolSize);
 	private ThreadPoolExecutor threadPool;
 	private Map<Long, Producer> producers;
+	private OrderManagement orderManagement;
+	private Map<Long, Order> orders;
 	private Long idCounter;
+	private Long orderIdCounter;
 	private Logger logger = Logger.getLogger(CarFactoryManager.class);
 	private List<LogListener> logListeners;
 	private List<DomainListener> domainListeners;
-	
+
 	private UpdateGUI updateGUI = null;
-	
+
 	public CarFactoryManager() {
 		this.threadPool = new ThreadPoolExecutor(CarFactoryManager.poolSize, CarFactoryManager.maxPoolSize,
 				CarFactoryManager.keepAliveTime, TimeUnit.SECONDS, queue);
 		this.producers = new HashMap<Long, Producer>();
+		this.orderManagement = new OrderManagement();
+		this.orders = new HashMap<Long, Order>();
 		this.idCounter = 1L;
+		this.orderIdCounter = 1L;
 		this.updateGUI = new UpdateGUI(this);
 		// ExecutorService executorService = Executors.newCachedThreadPool();
 		this.logger.debug("CarFactoryManager instantiated");
 	}
-	
+
 	@Override
 	public long createProducer() {
 		long id = this.idCounter;
 		Producer producer = null;
 		try {
 			producer = new Producer(id);
-		} catch (CarFactoryException e) {
-			this.logger.debug("CarFactoryException at creating a new Producer", e);
+		} catch (Exception e) {
+			this.logger.debug("Exception at creating a new Producer", e);
 			return -1;
 		}
-		
+
 		this.producers.put(id, producer);
 		this.threadPool.execute(producer);
 		this.idCounter++;
@@ -74,15 +84,15 @@ public class CarFactoryManager extends Model {
 	}
 
 	@Override
-	public long createProducer(int numParts, CarPartType carPartType) {
+	public long createProducer(int numParts, Double errorRate, CarPartType carPartType) {
 		long id = this.createProducer();
 		if(id == -1) {
 			return id;
 		}
-		this.assignWorkToProducer(numParts, carPartType, id);
+		this.assignWorkToProducer(numParts, errorRate, carPartType, id);
 		return id;
 	}
-	
+
 	@Override
 	public boolean shutdownProducer(long id) {
 		if (this.producers.get(id) != null) {
@@ -90,7 +100,7 @@ public class CarFactoryManager extends Model {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean shutdown() {
 		System.out.println("Number of Producers: " + this.producers.size());
@@ -102,12 +112,12 @@ public class CarFactoryManager extends Model {
 		this.updateGUI.stopListening();
 		return true;
 	}
-	
+
 	public void entryOperationFinished(Serializable obj) {
 		System.out.println("Notified:  on:" + obj);
 		this.updatedDomainObjects(obj);
 	}
-	
+
 	private void updatedDomainObjects(Serializable obj) {
 		if(this.domainListeners == null || this.domainListeners.size() == 0) {
 			return;
@@ -123,23 +133,22 @@ public class CarFactoryManager extends Model {
 					this.domainListeners.get(i).carPartUpdated(((Car)obj).getTires().get(j), true);
 				}
 				this.domainListeners.get(i).carUpdated((Car)obj);
-			
 			}
 		}
 	}
-	
+
 	@Override
-	public boolean assignWorkToProducer(int numParts, CarPartType carPartType, long producerID) {
+	public boolean assignWorkToProducer(int numParts, Double errorRate, CarPartType carPartType, long producerID) {
 		Producer producer = this.producers.get(producerID);
 		if (producer == null) {
 			//TODO: notify gui
 			this.logger.debug("AssignWorkError: Could not find producer with id " + producerID);
 			return false;
 		}
-		producer.addWorkTask(new WorkTask(numParts, carPartType));
+		producer.addWorkTask(new WorkTask(numParts, errorRate, carPartType));
 		return true;
 	}
-	
+
 	@Override
 	public boolean deleteProducer(long id) {
 		this.shutdownProducer(id);
@@ -164,6 +173,23 @@ public class CarFactoryManager extends Model {
 			this.domainListeners = new ArrayList<DomainListener>();
 		}
 		this.domainListeners.add(listener);
+	}
+
+	@Override
+	public Order createOrder(Integer carAmount, CarMotorType carMotorType, CarColor carColor) {
+		Long id = this.orderIdCounter;
+		Order order = null;
+		try {
+			order = new Order(id, carAmount, carColor, carMotorType);
+		} catch (Exception e) {
+			this.logger.debug("Exception at creating a new Order", e);
+			return null;
+		}
+		this.orderManagement.sendOrder(order);
+		this.orders.put(id, order);//TODO not necessary?
+		this.orderIdCounter++;
+		this.logger.debug("Created Order with ID: " + id);
+		return order;
 	}
 
 }

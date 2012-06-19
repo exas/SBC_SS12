@@ -28,10 +28,10 @@ public class Benchmark {
 		Assembler assembler1 = new Assembler((long)1);
 		Assembler assembler2 = new Assembler((long)2);
 
-		Painter painter1 = new Painter((long)1, CarColor.BLUE);
-		Painter painter2 = new Painter((long)2, CarColor.RED);
+		Painter painter1 = new Painter(1, CarColor.BLUE);
+		Painter painter2 = new Painter(2, CarColor.RED);
 
-		Logistician logistician = new Logistician((long)1);
+		Logistician logistician = new Logistician(1);
 
 		Tester tester1 = new Tester((long)1, TestCase.CHECK_ALL_PARTS);
 		Tester tester2 = new Tester((long)2, TestCase.CHECK_DEFECT_PARTS);

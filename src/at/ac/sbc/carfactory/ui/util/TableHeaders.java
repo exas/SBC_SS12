@@ -4,4 +4,5 @@ public class TableHeaders {
 	public static final String producerHeaders[] = { "ID", "Delay", "Delete", "AssignWork"};
 	public static final String statisticCarParts[] = { "ID", "Type", "Producer", "Additional", "Process"};
 	public static final String statisticFinishedCars[] = { "ID", "Body", "Motor", "Tires", "Assembler", "Logistician", "Finished"};
+	public static final String orderHeaders[] = { "ID", "Car#", "CarMotorType", "CarColor"};
 }

@@ -4,9 +4,6 @@ import org.apache.log4j.Logger;
 import at.ac.sbc.carfactory.domain.WorkTask;
 
 import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
-
-import at.ac.sbc.carfactory.util.CarFactoryException;
-
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.concurrent.SynchronousQueue;
@@ -24,6 +21,8 @@ import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+
+import at.ac.sbc.carfactory.domain.CarMotorType;
 
 public class Producer implements Runnable{
 
@@ -48,7 +47,7 @@ public class Producer implements Runnable{
 	private Logger logger = Logger.getLogger(Producer.class);
 	private Context context;
 
-	public Producer(long id) throws CarFactoryException {
+	public Producer(long id) {
 		this.id = id;
 		this.init();
 	}
@@ -99,7 +98,7 @@ public class Producer implements Runnable{
 	}
 
 	public void produce(WorkTask task) {
-		logger.debug("Producer <"+this.id+">: Start producing "+task.getNumParts()+" x <"+task.getCarPartTyp().toString()+">.");
+		logger.debug("Producer <"+this.id+">: Start producing "+task.getNumParts()+" x <"+task.getCarPartTyp().toString()+"> with ErrorRate<"+task.getErrorRate()+"%>.");
 		try {
 
 			//create Connection for JMS Queue
@@ -112,19 +111,34 @@ public class Producer implements Runnable{
 
 			for (int i = 0; i < task.getNumParts(); i++)
 			{
-				//get random value for between 1-3 sec. as work time
+				//get random value
 				Random rn = new Random();
 
 				int range = maxWorkTime - minWorkTime + 1;
 				int randomNum =  rn.nextInt(range) + minWorkTime;
+				boolean isDefect = false;
 
+				//get error Probability Random Number
+				double errProbRandomNum = rn.nextDouble() * 100;
+
+				//gets random value either 0,1,2  (excl. 3 !)
+				int randomCarMotorType = rn.nextInt(3);
+
+				logger.debug("errProbRandomNum: "+ errProbRandomNum);
+				logger.debug("task.ErrorRate: "+ task.getErrorRate());
+				//if inside errorRate mark as DEFECT
+				if(errProbRandomNum <= task.getErrorRate())
+					isDefect = true;
+
+				logger.debug("isDefect: "+ isDefect);
 				Thread.sleep(randomNum);
 
 				//Create Data Transfer Object for Queue
 				CarPartDTO carPartDTO = new CarPartDTO();
 				carPartDTO.setCarPartType(task.getCarPartTyp());
+				carPartDTO.setCarMotorType(CarMotorType.getEnumByValue(randomCarMotorType));
 				carPartDTO.setProducerId(this.id);
-
+				carPartDTO.setIsDefect(isDefect);
 				carPartDTO.setId(task.getCarPartId());
 
 				logger.debug("Producer <"+this.id+">: Producing "+task.getCarPartTyp().toString()+" <"+carPartDTO.getId()+">.");

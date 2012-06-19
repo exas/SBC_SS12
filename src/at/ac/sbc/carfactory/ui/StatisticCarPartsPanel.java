@@ -23,6 +23,8 @@ public class StatisticCarPartsPanel extends JPanel {
 	private static final long serialVersionUID = -7357480927058456370L;
 	private JTable table = null;
 	private DefaultTableModel tableModel;
+
+	@SuppressWarnings("unused")
 	private CarFactoryUI parent;
 
 	public StatisticCarPartsPanel(CarFactoryUI parent) {

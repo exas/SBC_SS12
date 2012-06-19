@@ -11,7 +11,7 @@
          <entry name="/XAConnectionFactory"/>
       </entries>
    </connection-factory>
-   
+
    <connection-factory name="NettyConnectionFactory">
       <xa>false</xa>
       <connectors>
@@ -21,7 +21,7 @@
          <entry name="/ConnectionFactory"/>
       </entries>
    </connection-factory>
-   
+
    <connection-factory name="NettyThroughputConnectionFactory">
       <xa>true</xa>
       <connectors>
@@ -31,7 +31,7 @@
          <entry name="/XAThroughputConnectionFactory"/>
       </entries>
    </connection-factory>
-   
+
    <connection-factory name="NettyThroughputConnectionFactory">
       <xa>false</xa>
       <connectors>
@@ -41,27 +41,31 @@
          <entry name="/ThroughputConnectionFactory"/>
       </entries>
    </connection-factory>
-   
+
    <queue name="carPartQueue">
       <entry name="/queue/carPartQueue"/>
    </queue>
-   
+
+   <queue name="orderQueue">
+      <entry name="/queue/orderQueue"/>
+   </queue>
+
    <queue name="assemblingJobQueue">
       <entry name="/queue/assemblingJobQueue"/>
    </queue>
-   
+
    <queue name="painterJobQueue">
       <entry name="/queue/painterJobQueue"/>
    </queue>
-   
+
    <queue name="assembledCarQueue">
       <entry name="/queue/carQueue"/>
    </queue>
-   
+
    <queue name="finishedCarQueue">
       <entry name="/queue/logisticJobQueue"/>
    </queue>
-   
+
    <queue name="ExpiryQueue">
       <entry name="/queue/ExpiryQueue"/>
    </queue>

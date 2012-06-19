@@ -8,7 +8,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -79,12 +78,12 @@ public class StatisticCarsPanel extends JPanel {
 				private void maybeShowInfo(MouseEvent e) {
 					if (e.isPopupTrigger() && table.isEnabled()) {
 						Point p = new Point(e.getX(), e.getY());
-						int col = table.columnAtPoint(p);
+						//int col = table.columnAtPoint(p);
 						int row = table.rowAtPoint(p);
 						table.setRowSelectionInterval(row, row);
 
 						// translate table index to model index
-						int mcol = table.getColumn(table.getColumnName(col)).getModelIndex();
+						//int mcol = table.getColumn(table.getColumnName(col)).getModelIndex();
 
 						if (row >= 0 && row < table.getRowCount()) {
 							// update info area
@@ -119,8 +118,8 @@ public class StatisticCarsPanel extends JPanel {
 		//this.carInfoTextArea.append("Car [" + carID + "]");
 
 		String line1_carText = "";
-		String line2_assemblerText = "\n";
-		String line3_logisticianText = "\n";
+//		String line2_assemblerText = "\n";
+//		String line3_logisticianText = "\n";
 		String line4_carBodyText =  "\n    ";
 		String line5_carMotorText = "\n    ";
 		String line6_carTiresText = "\n    ";
@@ -182,10 +181,10 @@ public class StatisticCarsPanel extends JPanel {
 		//this.carInfoTextArea.append("\tAssembler: " + assemblerID + "\n");
 		//line2_assemblerText += "Assembler["+assemblerID+"]";
 
-		if((logisticianID != null) && (logisticianID.equals("") == false)) {
-			//this.carInfoTextArea.append("\tLogistician: " + logisticianID + "\n");
-			line3_logisticianText += "Logistician["+logisticianID+"]";
-		}
+//		if((logisticianID != null) && (logisticianID.equals("") == false)) {
+//			//this.carInfoTextArea.append("\tLogistician: " + logisticianID + "\n");
+//			line3_logisticianText += "Logistician["+logisticianID+"]";
+//		}
 
 		this.carInfoTextArea.append(line1_carText);
 		//this.carInfoTextArea.append(line2_assemblerText);
