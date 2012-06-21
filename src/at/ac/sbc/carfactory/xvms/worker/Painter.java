@@ -24,18 +24,18 @@ import at.ac.sbc.carfactory.xvms.util.SpaceUtil;
 import at.ac.sbc.carfactory.xvms.util.WorkTaskLabel;
 
 public class Painter extends Worker {
-	
+
 	private SpaceUtil space;
 	private List<WorkTaskLabel> labels;
 	private CarColor color;
-	
+
 	public Painter(long id, CarColor color) {
 		super(id);
 		this.color = color;
 		this.labels = Arrays.asList(WorkTaskLabel.CAR_BODY, WorkTaskLabel.CAR);
 		this.initSpace();
 	}
-	
+
 	private void initSpace() {
 		try {
 			this.space = new SpaceUtil();
@@ -43,7 +43,7 @@ public class Painter extends Worker {
 			Logger.getLogger(Painter.class.getName()).log(Level.SEVERE, "CarFactoryException", ex.getMessage());
 		}
 	}
-	
+
 	public void paintCar() {
 		Query query = new Query().filter(Matchmakers.and((Matchmakers.or(Property.forName("type").equalTo(CarPartType.CAR), Property.forName("type").equalTo(CarPartType.CAR_BODY))), Property.forName("painted").equalTo(null)));
 		TransactionReference tx;
@@ -94,7 +94,7 @@ public class Painter extends Worker {
 			System.exit(-1);
  		}
 	}
-	
+
 	public void processCarBody() {
 		TransactionReference tx;
 		try {
@@ -149,7 +149,7 @@ public class Painter extends Worker {
 			 Logger.getLogger(Painter.class.getName()).log(Level.INFO, "Provide ID and Color as argument", "Provide ID as argument");
 			 System.exit(-2);
 		 }
-		 
+
 		 CarColor color = null;
 		 if(args[1].equalsIgnoreCase("red")) {
 			 color = CarColor.RED;
@@ -166,7 +166,7 @@ public class Painter extends Worker {
 		 else {
 			 color = CarColor.WHITE;
 		 }
-		 
+
 		 Painter painter = new Painter(id, color);
 		 while(true) {
 			 //painter.paintCar();

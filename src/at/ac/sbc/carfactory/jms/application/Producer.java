@@ -22,6 +22,8 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
+import at.ac.sbc.carfactory.domain.CarPartType;
+
 import at.ac.sbc.carfactory.domain.CarMotorType;
 
 public class Producer implements Runnable{
@@ -55,8 +57,8 @@ public class Producer implements Runnable{
 	private void init() {
 		//used for getting random value between 1 and 3 sec. putting thread to sleep.
 		//set now to 50ms and 200ms
-		minWorkTime = 50; //ms.
-		maxWorkTime = 200; //ms
+		minWorkTime = 10; //ms.
+		maxWorkTime = 50; //ms
 
 		this.tasks = new SynchronousQueue<WorkTask>();
 		Hashtable<String, String> env = new Hashtable<String, String>();
@@ -73,6 +75,14 @@ public class Producer implements Runnable{
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				if(context != null)
+					context.close();
+			} catch (NamingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -119,7 +129,7 @@ public class Producer implements Runnable{
 				boolean isDefect = false;
 
 				//get error Probability Random Number
-				double errProbRandomNum = rn.nextDouble() * 100;
+				double errProbRandomNum = rn.nextDouble();
 
 				//gets random value either 0,1,2  (excl. 3 !)
 				int randomCarMotorType = rn.nextInt(3);
@@ -127,6 +137,7 @@ public class Producer implements Runnable{
 				logger.debug("errProbRandomNum: "+ errProbRandomNum);
 				logger.debug("task.ErrorRate: "+ task.getErrorRate());
 				//if inside errorRate mark as DEFECT
+
 				if(errProbRandomNum <= task.getErrorRate())
 					isDefect = true;
 
@@ -135,13 +146,18 @@ public class Producer implements Runnable{
 
 				//Create Data Transfer Object for Queue
 				CarPartDTO carPartDTO = new CarPartDTO();
-				carPartDTO.setCarPartType(task.getCarPartTyp());
-				carPartDTO.setCarMotorType(CarMotorType.getEnumByValue(randomCarMotorType));
-				carPartDTO.setProducerId(this.id);
-				carPartDTO.setIsDefect(isDefect);
-				carPartDTO.setId(task.getCarPartId());
+				carPartDTO.carPartType = task.getCarPartTyp();
 
-				logger.debug("Producer <"+this.id+">: Producing "+task.getCarPartTyp().toString()+" <"+carPartDTO.getId()+">.");
+				if(task.getCarPartTyp() == CarPartType.CAR_MOTOR) {
+					carPartDTO.carMotorType = CarMotorType.getEnumByValue(randomCarMotorType);
+
+					logger.debug("carMotorType: "+ carPartDTO.carMotorType);
+				}
+				carPartDTO.producerId = this.id;
+				carPartDTO.isDefect = isDefect;
+				carPartDTO.id = task.getCarPartId();
+
+				logger.debug("Producer <"+this.id+">: Producing "+task.getCarPartTyp().toString()+" <"+carPartDTO.id+">.");
 
 				//check if more than 1 part is created and if not last iteration is reached
 				//then generate new CarPartId and set this in task since taskId = carPartId
@@ -162,7 +178,7 @@ public class Producer implements Runnable{
 
 				//update GUI
     			producerUpdateGUI.send(outObjectMessage);
-    			logger.debug("<"+this.getId()+">: CarBody is painted - Update GUI Queue, Msg sent.");
+    			logger.debug("<"+this.getId()+">: Finished producing - Update GUI Queue, Msg sent.");
 
 			}
 		} catch (InterruptedException e) {

@@ -1,5 +1,7 @@
 package at.ac.sbc.carfactory.ui;
 
+import org.apache.log4j.Logger;
+
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -41,6 +43,8 @@ public class CarFactoryUI extends View implements DomainListener, LogListener, W
 	private JMenuItem createProducer;
 	private JMenuItem closeApp;
 	private JMenuItem showStatistics;
+
+	private Logger logger = Logger.getLogger(CarFactoryUI.class);
 
 	//Should be not in VIEW ? in controller ref.?
 	//carFactoryManager
@@ -161,7 +165,11 @@ public class CarFactoryUI extends View implements DomainListener, LogListener, W
 	@Override
 	public void windowClosing(WindowEvent e) {
 		if (JOptionPane.OK_OPTION == getValidationDialogResult()){
-			//TODO: close APP
+			if (model.shutdown())
+				logger.info("Model Shutdown successfully.");
+			else
+				logger.info("Model could not shutdown properly.");
+
 			System.exit(0);
 		}
 	}

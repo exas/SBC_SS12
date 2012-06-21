@@ -103,7 +103,7 @@ public class CarFactoryManager extends Model {
 
 	@Override
 	public boolean shutdown() {
-		System.out.println("Number of Producers: " + this.producers.size());
+		logger.debug("SHUTDOWN: Number of Producers: " + this.producers.size());
 		Iterator<Long> it = this.producers.keySet().iterator();
 		while(it.hasNext()) {
 			this.producers.get(it.next()).shutdown();

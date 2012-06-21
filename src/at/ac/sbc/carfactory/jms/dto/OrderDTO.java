@@ -8,11 +8,20 @@ import at.ac.sbc.carfactory.domain.CarColor;
 
 public class OrderDTO implements java.io.Serializable{
 
+
 	private static final long serialVersionUID = 1L;
 
-	public Long id;
-	public int carAmount;
-	public CarColor carColor;
-	public CarMotorType carMotorType;
+	public Long id = null;
+	public Integer carAmount = null;
+	public CarColor carColor = null;
+	public CarMotorType carMotorType = null;
+
+	public OrderDTO() {
+		this.id = null;
+		this.carAmount = null;
+		this.carColor = null;
+		this.carMotorType = null;
+	}
+
 
 }

@@ -58,6 +58,41 @@ public class CarPartDaoSimpleImpl {
 		return carBodys.get(id);
 	}
 
+	public synchronized void updateCarBodyFromPainter(final Long id,
+			CarBody carBodyForUpdate) {
+		final CarBody carBodyToUpdate = getCarBodyById(id);
+
+		if (carBodyForUpdate.getPainterWorkerId() == null
+				|| carBodyForUpdate.getId() != carBodyToUpdate.getId()) {
+			// no Painter RETURN
+			return;
+		}
+		carBodyToUpdate.setCarId(carBodyForUpdate.getCarId());
+		carBodyToUpdate.setCarPartType(carBodyForUpdate.getCarPartType());
+		carBodyToUpdate.setColor(carBodyForUpdate.getColor());
+		carBodyToUpdate.setDefect(carBodyForUpdate.isDefect());
+		carBodyToUpdate.setFree(carBodyForUpdate.isFree());
+		carBodyToUpdate.setOrderId(carBodyForUpdate.getOrderId());
+		carBodyToUpdate.setPainterWorkerId(carBodyForUpdate
+				.getPainterWorkerId());
+		carBodyToUpdate.setProducerId(carBodyForUpdate.getProducerId());
+
+		deleteCarBodyById(id);
+
+		freeCarBodys.putIfAbsent(carBodyToUpdate.getId(), carBodyToUpdate);
+
+		// ADD CAR BODY IN FRONT OF ALL OTHERs since already used and should be
+		// the oldest
+		Object[] items = freeCarBodyIdQueue.toArray();
+		freeCarBodyIdQueue.clear();
+		freeCarBodyIdQueue.add(carBodyToUpdate.getId()); // new first element
+
+		for (Object item : items) {
+			Long itemId = (Long) item;
+			freeCarBodyIdQueue.add(itemId);
+		}
+	}
+
 	public void updateCarBodyById(final Long id, final CarBody carBodyForUpdate) {
 		final CarBody carBodyToUpdate = getCarBodyById(id);
 		// TODO update fields
@@ -153,7 +188,7 @@ public class CarPartDaoSimpleImpl {
 		return freeCarMotors.get(id);
 	}
 
-	public void updateFreeCarMotorById(final Long id,
+	public synchronized void updateFreeCarMotorById(final Long id,
 			final CarMotor carMotorForUpdate) {
 		final CarMotor carMotorToUpdate = getFreeCarMotorById(id);
 		// TODO update fields
@@ -279,7 +314,7 @@ public class CarPartDaoSimpleImpl {
 			Long nextCarTireId = null;
 
 			// check and get oldest carTires (first ones from queue)!
-			if(it.hasNext())
+			if (it.hasNext())
 				nextCarTireId = it.next();
 
 			CarTire nextCarTire = null;
@@ -346,26 +381,26 @@ public class CarPartDaoSimpleImpl {
 		return carParts;
 	}
 
-	public boolean checkIfSingleBodyPainterJob() {
-		Long nextCarBodyId = freeCarBodyIdQueue.peek();
-		CarBody nextCarBody = null;
-
-		if (nextCarBodyId != null) {
-			nextCarBody = freeCarBodys.get(nextCarBodyId);
-		}
-
-		if (nextCarBody != null) {
-			if(!nextCarBody.isPainted() || nextCarBody.getColor() == null)
-				return true;
-		}
-
-		return false;
-	}
+	// public boolean checkIfSingleBodyPainterJob() {
+	// Long nextCarBodyId = freeCarBodyIdQueue.peek();
+	// CarBody nextCarBody = null;
+	//
+	// if (nextCarBodyId != null) {
+	// nextCarBody = freeCarBodys.get(nextCarBodyId);
+	// }
+	//
+	// if (nextCarBody != null) {
+	// if(!nextCarBody.isPainted() || nextCarBody.getColor() == null)
+	// return true;
+	// }
+	//
+	// return false;
+	// }
 	// private String generateNextCarId() {
 	// return Long.toString(NEXT_CAR_ID.getAndIncrement());
 	// }
 
-	public CarBody getSingleBodyPainterJob() {
+	public synchronized CarBody getSingleBodyPainterJob() {
 		Long nextCarBodyId = freeCarBodyIdQueue.peek();
 		CarBody nextCarBody = null;
 
@@ -374,7 +409,7 @@ public class CarPartDaoSimpleImpl {
 		}
 
 		if (nextCarBody != null) {
-			if(!nextCarBody.isPainted() || nextCarBody.getColor() == null) {
+			if (!nextCarBody.isPainted() || nextCarBody.getColor() == null) {
 				freeCarBodyIdQueue.remove(nextCarBodyId);
 				freeCarBodys.remove(nextCarBodyId);
 			}

@@ -10,12 +10,12 @@ public class CarBody extends CarPart {
 	@Index(label="painted")
 	private CarColor color;
 	private Long painterWorkerId;
-	
+
 	public CarBody() {
 		this.color = null;
 		this.carPartType = CarPartType.CAR_BODY;
 	}
-	
+
 	public CarBody(Long id, Long producerId) {
 		super();
 		this.id = id;
@@ -23,19 +23,32 @@ public class CarBody extends CarPart {
 		this.color = null;
 		this.carPartType = CarPartType.CAR_BODY;
 	}
-	
+
+	public CarBody(Long id, Long carId, Long orderId, Long painterId,
+			Long producerId, CarPartType carPartType, CarColor bodyColor, Boolean isDefect) {
+		super();
+		this.id = id;
+		this.carId = carId;
+		this.orderId = orderId;
+		this.painterWorkerId = painterId;
+		this.producerId = producerId;
+		this.carPartType = carPartType;
+		this.color = bodyColor;
+		this.isDefect = isDefect;
+	}
+
 	@Override
 	public CarPartType getCarPartType() {
 		return CarPartType.CAR_BODY;
 	}
-	
+
 	public boolean isPainted() {
 		if(this.color == null) {
 			return false;
 		}
 		return true;
 	}
-	
+
 	public CarColor getColor() {
 		return color;
 	}

@@ -24,6 +24,13 @@ public class Car implements Serializable {
 
 	private boolean isDefect;
 
+	private Long testerAllPartsAssembledWorkerId;
+	private Long testerIsDefectWorkerId;
+
+	private Long orderId;
+
+	private boolean isTestingFinished;
+
 	@Index(label="type")
 	private CarPartType carPartType;
 
@@ -121,5 +128,38 @@ public class Car implements Serializable {
 
 	public void setCarPartType(CarPartType carPartType) {
 		this.carPartType = carPartType;
+	}
+
+	public Long getTesterAllPartsAssembledWorkerId() {
+		return testerAllPartsAssembledWorkerId;
+	}
+
+	public void setTesterAllPartsAssembledWorkerId(
+			Long testerAllPartsAssembledWorkerId) {
+		this.testerAllPartsAssembledWorkerId = testerAllPartsAssembledWorkerId;
+	}
+
+	public Long getTesterIsDefectWorkerId() {
+		return testerIsDefectWorkerId;
+	}
+
+	public void setTesterIsDefectWorkerId(Long testerIsDefectWorkerId) {
+		this.testerIsDefectWorkerId = testerIsDefectWorkerId;
+	}
+
+	public boolean isTestingFinished() {
+		return isTestingFinished;
+	}
+
+	public void setTestingFinished(boolean isTestingFinished) {
+		this.isTestingFinished = isTestingFinished;
+	}
+
+	public Long getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(Long orderId) {
+		this.orderId = orderId;
 	}
 }

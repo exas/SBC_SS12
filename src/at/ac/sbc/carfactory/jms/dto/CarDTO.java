@@ -1,6 +1,9 @@
 package at.ac.sbc.carfactory.jms.dto;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import at.ac.sbc.carfactory.util.TestCase;
 
 
 //Data Transfer Object, just a simple class which holds all relevant data for transfering this object via Messaging/Queues.
@@ -9,77 +12,35 @@ public class CarDTO implements java.io.Serializable{
 
 	private static final long serialVersionUID = 1L;
 
-	private Long id;
+	public Long id = null;
 
-	private CarPartDTO carBody;
-	private CarPartDTO carMotor;
-	private List<CarPartDTO> carTires;
+	public CarPartDTO carBody = null;
+	public CarPartDTO carMotor = null;
+	public List<CarPartDTO> carTires = null;
 
-	private Long assemblyWorkerId;
-	private Long logisticWorkerId;
-	private boolean isDefect;
+	public Long assemblyWorkerId = null;
+	public Long logisticWorkerId = null;
+
+	public Long testerAllPartsAssembledWorkerId = null;
+	public Long testerIsDefectWorkerId = null;
+
+	public Boolean isDefect = null;
+	public Long orderId = null;
+
+	public List<TestCase> testCases = new ArrayList<TestCase>();
+
+	public boolean isTestingFinished = false;
 
 	public CarDTO() {
+		this.id = null;
 
+		this.carBody = null;
+		this.carMotor = null;
+		this.carTires = null;
+
+		this.assemblyWorkerId = null;
+		this.logisticWorkerId = null;
+		this.isDefect = null;
+		this.orderId = null;
 	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getAssemblyWorkerId() {
-		return assemblyWorkerId;
-	}
-
-	public void setAssemblyWorkerId(Long assemblyWorkerId) {
-		this.assemblyWorkerId = assemblyWorkerId;
-	}
-
-	public Long getLogisticWorkerId() {
-		return logisticWorkerId;
-	}
-
-	public void setLogisticWorkerId(Long logisticWorkerId) {
-		this.logisticWorkerId = logisticWorkerId;
-	}
-
-	public CarPartDTO getCarBody() {
-		return carBody;
-	}
-
-	public void setCarBody(CarPartDTO carBody) {
-		this.carBody = carBody;
-	}
-
-	public CarPartDTO getCarMotor() {
-		return carMotor;
-	}
-
-	public void setCarMotor(CarPartDTO carMotor) {
-		this.carMotor = carMotor;
-	}
-
-	public List<CarPartDTO> getCarTires() {
-		return carTires;
-	}
-
-	public void setCarTires(List<CarPartDTO> carTires) {
-		this.carTires = carTires;
-	}
-
-	public boolean isDefect() {
-		return isDefect;
-	}
-
-	public void setDefect(boolean isDefect) {
-		this.isDefect = isDefect;
-	}
-
-
-
-
 }

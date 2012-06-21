@@ -118,7 +118,7 @@ public class AssignWorkPanel extends JDialog {
                         new NumberFormatter(percentDisplayFormat),
                         percentEditFormatter));
 
-		textFieldErrorRate.setValue(new Float(.15));
+		textFieldErrorRate.setValue(new Double(.15));
 		textFieldErrorRate.setColumns(5);
 		// textFieldErrorRate.addPropertyChangeListener("value", this);
 

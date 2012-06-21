@@ -1,216 +1,356 @@
 package at.ac.sbc.carfactory.jms.worker;
 
-
 import java.util.Hashtable;
 import java.util.Scanner;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.log4j.Logger;
 
 import at.ac.sbc.carfactory.jms.dto.CarDTO;
 
-public class Assembler extends Worker implements MessageListener, ExceptionListener {
+public class Assembler extends Worker {
 
 	private ConnectionFactory cf;
 	private Connection connection;
 	private Session session;
-	private Queue assemblingJobQueue;
-	private Queue painterJobQueue;
-	private Queue assembledCarQueue;
-	private Queue updateGUIQueue;
-
-	private MessageConsumer messageConsumer;
 	private Context context;
+
+	private Queue assemblingJobQueue;
+	private Queue assemblingJobHiPrioQueue;
+
+	private Queue painterJobQueue;
+	private Queue painterJobHiPrioQueue;
+
+	private Queue assembledCarQueue;
+	private Queue assembledCarHiPrioQueue;
+
+	private Queue updateGUIQueue;
+	private Queue updateDBQueue;
+
+	private MessageConsumer messageAssemblingCarConsumer;
+	private MessageConsumer messageAssemblingCarHiPrioConsumer;
+
+	private MessageProducer messagePainterJobAssembledCarProducer = null;
+	private MessageProducer messagePainterJobAssembledCarHiPrioProducer = null;
+
+	private MessageProducer messageAssembledCarProducer = null;
+	private MessageProducer messageAssembledCarHiPrioProducer = null;
+
+	private MessageProducer messageUpdateGUIProducer = null;
+	private MessageProducer messageUpdateDBProducer = null;
 
 	private final static Logger logger = Logger.getLogger(Assembler.class);
 
 	public Assembler(Long id) {
 		super(id);
-		this.startListening();
-		this.startConnection();
+		this.setupConnections();
 	}
 
-	public void startConnection() {
+	public void setupConnections() {
 		try {
+			// TODO connect to server do not create a new Server !!
+			Hashtable<String, String> env = new Hashtable<String, String>();
+			env.put("java.naming.factory.initial",
+					"org.jnp.interfaces.NamingContextFactory");
+			env.put("java.naming.provider.url", "jnp://localhost:1099");
+			env.put("java.naming.factory.url.pkgs",
+					"org.jboss.naming:org.jnp.interfaces");
+			context = new InitialContext(env);
+
+			this.cf = (ConnectionFactory) context.lookup("/cf");
+
+			this.assembledCarQueue = (Queue) context
+					.lookup("/queue/assembledCarQueue");
+			this.assembledCarHiPrioQueue = (Queue) context
+					.lookup("/queue/assembledCarHiPrioQueue");
+			this.assemblingJobQueue = (Queue) context
+					.lookup("/queue/assemblingJobQueue");
+			this.assemblingJobHiPrioQueue = (Queue) context
+					.lookup("/queue/assemblingJobHiPrioQueue");
+			this.painterJobQueue = (Queue) context
+					.lookup("/queue/painterJobQueue");
+			this.painterJobHiPrioQueue = (Queue) context
+					.lookup("/queue/painterJobHiPrioQueue");
+
+			this.updateDBQueue = (Queue) context.lookup("/queue/updateDBQueue");
+			this.updateGUIQueue = (Queue) context
+					.lookup("/queue/updateGUIQueue");
+
+			connection = cf.createConnection();
+			session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+			// create Consumers for normal and highprio stuff
+			messageAssemblingCarConsumer = session
+					.createConsumer(assemblingJobQueue);
+			messageAssemblingCarHiPrioConsumer = session
+					.createConsumer(assemblingJobHiPrioQueue);
+
 			connection.start();
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			 logger.error("<"+this.getId()+">:setup:" + "Exception: "+ e.toString());
-			e.printStackTrace();
+		} catch (Throwable t) {
+			// JMSException could be thrown
+			logger.error("setupConnection<" + this.getId() + ">:setup:"
+					+ "Exception: " + t.toString());
+			t.printStackTrace();
 		}
 	}
-
-	public void closeConnection() {
-		try {
-			if(connection != null)
-				connection.close();
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void startListening() {
-        try {
-        	//TODO connect to server do not create a new Server !!
-        	Hashtable<String, String> env = new Hashtable<String, String>();
-            env.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
-            env.put("java.naming.provider.url", "jnp://localhost:1099");
-            env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
-            context = new InitialContext(env);
-
-    		this.cf = (ConnectionFactory)context.lookup("/cf");
-
-    		this.assembledCarQueue = (Queue)context.lookup("/queue/assembledCarQueue");
-    		this.assemblingJobQueue = (Queue)context.lookup("/queue/assemblingJobQueue");
-    		this.painterJobQueue = (Queue)context.lookup("/queue/painterJobQueue");
-            this.updateGUIQueue = (Queue)context.lookup("/queue/updateGUIQueue");
-
-            connection = cf.createConnection();
-
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-            this.messageConsumer = session.createConsumer(assemblingJobQueue);
-    		messageConsumer.setMessageListener(this);
-
-
-        } catch (Throwable t) {
-            // JMSException could be thrown
-            logger.error("<"+this.getId()+">:setup:" + "Exception: "+ t.toString());
-        }
-    }
 
 	@Override
-	public void onMessage(Message inMessage) {
-		MessageProducer producerAssembledCar = null;
-        MessageProducer producerPainterJob = null;
-        MessageProducer producerUpdateGUI = null;
+	protected void closeConnections() {
+		try {
+			if (messageAssemblingCarConsumer != null)
+				messageAssemblingCarConsumer.close();
+
+			if (messageAssemblingCarHiPrioConsumer != null)
+				messageAssemblingCarHiPrioConsumer.close();
+
+			if (session != null)
+				session.close();
+
+			if (connection != null)
+				connection.close();
+
+			if (context != null)
+				context.close();
+
+		} catch (JMSException ex) {
+			ex.printStackTrace();
+		} catch (NamingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void receiveMessage() {
+		logger.debug("<" + this.getWorkerId() + ">: receiveMessage");
+
+		if (session == null) {
+			logger.error("<"
+					+ this.getWorkerId()
+					+ ">:receiveMessage  Session is NULL, RETURN, no processing of message possibel.");
+			return;
+		}
+
+		Message inMessage = null;
 
 		try {
-			logger.debug("<"+this.getId()+">: on Message");
+			// check assembledCar HI PRIO in painterJobQUEUE
+			inMessage = messageAssemblingCarHiPrioConsumer.receiveNoWait();
 
-			if(session == null) {
-	    		logger.error("<"+this.getId()+">:onMessage  Session is NULL, RETURN, no processing of message possibel.");
-	    		return;
-	    	}
+			if (inMessage == null) {
+				// check carPart LOW PRIO
+				inMessage = messageAssemblingCarConsumer.receiveNoWait();
+			}
+
+			if (inMessage != null) {
+				processMessage(inMessage);
+			}
+
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void processMessage(Message inMessage) {
+
+		try {
+			logger.debug("<" + this.getId() + ">: on Message");
+
+			if (session == null) {
+				logger.error("<"
+						+ this.getId()
+						+ ">:onMessage  Session is NULL, RETURN, no processing of message possibel.");
+				return;
+			}
 
 			ObjectMessage inObjectMessage = null;
-	    	ObjectMessage outObjectMessage = null;
+			ObjectMessage outObjectMessage = null;
 
+			CarDTO carDTO = null;
+			messageAssembledCarProducer = session
+					.createProducer(assembledCarQueue);
+			messageAssembledCarHiPrioProducer = session
+					.createProducer(assembledCarHiPrioQueue);
 
-	        CarDTO carDTO = null;
+			messagePainterJobAssembledCarProducer = session
+					.createProducer(painterJobQueue);
+			messagePainterJobAssembledCarHiPrioProducer = session
+					.createProducer(painterJobHiPrioQueue);
 
-        	producerAssembledCar = session.createProducer(assembledCarQueue);
-        	producerPainterJob = session.createProducer(painterJobQueue);
-        	producerUpdateGUI = session.createProducer(updateGUIQueue);
+			messageUpdateDBProducer = session.createProducer(updateDBQueue);
+			messageUpdateGUIProducer = session.createProducer(updateGUIQueue);
 
-        	if (inMessage instanceof ObjectMessage) {
-    			inObjectMessage = (ObjectMessage) inMessage;
+			if (inMessage instanceof ObjectMessage) {
+				inObjectMessage = (ObjectMessage) inMessage;
 
-    			if (inObjectMessage.getObject() instanceof CarDTO) {
-	    			carDTO = (CarDTO)inObjectMessage.getObject();
+				if (inObjectMessage.getObject() instanceof CarDTO) {
+					carDTO = (CarDTO) inObjectMessage.getObject();
 
-					//Painter sent this message to the Queue
-					logger.debug("<"+this.getId()+">: Received Msg from Server JobManagement Car to Assemble.");
+					// Server sent this message to the Queue
+					logger.debug("<"
+							+ this.getId()
+							+ ">: Received Msg from Server JobManagement Car to Assemble.");
 
-					if(carDTO.getId() != null) {
-						carDTO.setAssemblyWorkerId(this.getId());
+					if (carDTO.id != null) {
+						carDTO.assemblyWorkerId = (this.getId());
 
-						//check if painted
-						if(carDTO.getCarBody().getBodyColor() != null) {
-							//send CarDTO to assembledCarQueue
+						outObjectMessage = session.createObjectMessage(carDTO);
 
-	            			outObjectMessage = session.createObjectMessage(carDTO);
+						// check if painted
+						if (carDTO.carBody.bodyColor != null) {
+							// send CarDTO to assembledCarQueue
 
-	            			producerAssembledCar.send(outObjectMessage);
+							// update DB
+							messageUpdateDBProducer.send(outObjectMessage);
+							logger.debug("<"
+									+ this.getWorkerId()
+									+ ">: Car was assembled - Update DB Queue, Msg sent.");
 
-	            			logger.debug("<"+this.getId()+">: AssembledCar with Car<"+carDTO.getId()+"> is send out to assembledCarQUEUE");
+							// TODO UPDATE GUI over server??
 
-	            			//update GUI
-	            			producerUpdateGUI.send(outObjectMessage);
-	            			logger.debug("<"+this.getId()+">: Car was assembled - Update GUI Queue, Msg sent.");
+							// update GUI
+							messageUpdateGUIProducer.send(outObjectMessage);
+							logger.debug("<"
+									+ this.getWorkerId()
+									+ ">: Car was assembled - Update GUI Queue, Msg sent.");
+
+							// check if highprio by checking if orderId is set
+							// and send to other QUEUE?
+							if (carDTO.orderId != null) {
+								messageAssembledCarHiPrioProducer
+										.send(outObjectMessage);
+								logger.debug("HiPrio - Order<"
+										+ carDTO.orderId
+										+ "> Assembler<"
+										+ this.getId()
+										+ ">: AssembledCar with Car<"
+										+ carDTO.id
+										+ "> is send out to assembledCarHiPrioQUEUE");
+							} else {
+								messageAssembledCarProducer
+										.send(outObjectMessage);
+								logger.debug("Low Prio no OrderId <"
+										+ this.getId()
+										+ ">: AssembledCar with Car<"
+										+ carDTO.id
+										+ "> is send out to assembledCarQUEUE");
+							}
+
 						} else {
-							//send CarDTO to painterJobQueue
+							// send CarDTO to painterJobQueue
+							outObjectMessage.setStringProperty("type", "car");
+							// TODO if HIpprio add Color to TYPE and send to
+							// HiPrio
 
-	            			outObjectMessage = session.createObjectMessage(carDTO);
-	            			outObjectMessage.setStringProperty("type", "assembledCar");
+							// update DB
+							messageUpdateDBProducer.send(outObjectMessage);
+							logger.debug("<"
+									+ this.getWorkerId()
+									+ ">: Car was assembled - Update DB Queue, Msg sent.");
 
-	            			producerPainterJob.send(outObjectMessage);
+							// TODO UPDATE GUI over server??
 
-	            			logger.debug("<"+this.getId()+">: AssembledCar with Car<"+carDTO.getId()+"> is send out to painterJobQUEUE since not painted.");
+							// update GUI
+							messageUpdateGUIProducer.send(outObjectMessage);
+							logger.debug("<"
+									+ this.getWorkerId()
+									+ ">: Car was assembled - Update GUI Queue, Msg sent.");
 
-	            			//update GUI
-	            			producerUpdateGUI.send(outObjectMessage);
-	            			logger.debug("<"+this.getId()+">: Car was assembled but is not painted - Update GUI Queue, Msg sent.");
+							// check if highprio by checking if orderId is set
+							// and send to other QUEUE?
+							if (carDTO.orderId != null) {
+								messagePainterJobAssembledCarHiPrioProducer
+										.send(outObjectMessage);
+								logger.debug("HiPrio - Order<"
+										+ carDTO.orderId
+										+ "> Assembler<"
+										+ this.getId()
+										+ ">: AssembledCar with Car<"
+										+ carDTO.id
+										+ "> is send out to painterJobCarHiPrioQUEUE");
+							} else {
+								messagePainterJobAssembledCarProducer
+										.send(outObjectMessage);
+								logger.debug("Low Prio no OrderId <"
+										+ this.getId()
+										+ ">: AssembledCar with Car<"
+										+ carDTO.id
+										+ "> is send out to painterJobCarQUEUE");
+							}
 						}
 					}
 				}
-        	}
-        } catch (JMSException e) {
-            logger.error("onMessage: JMSException: " + e.toString());
-            e.printStackTrace();
-        } catch (Throwable te) {
-        	logger.error("onMessage: Exception: " + te.toString());
-            te.printStackTrace();
-        } finally {
-			//JMS close connection and session
-        	logger.info("JMS:Closing Message Producers!");
-			try { if( producerAssembledCar != null ) producerAssembledCar.close();  } catch( Exception ex ) {/*ok*/}
-			try { if( producerPainterJob != null ) producerPainterJob.close();  } catch( Exception ex ) {/*ok*/}
-			try { if( producerUpdateGUI != null ) producerUpdateGUI.close();  } catch( Exception ex ) {/*ok*/}
+			}
+		} catch (JMSException e) {
+			logger.error("onMessage: JMSException: " + e.toString());
+			e.printStackTrace();
+		} catch (Throwable te) {
+			logger.error("onMessage: Exception: " + te.toString());
+			te.printStackTrace();
+		} finally {
+			try {
+				if (messageAssembledCarHiPrioProducer != null)
+					messageAssembledCarHiPrioProducer.close();
+
+				if (messageAssembledCarProducer != null)
+					messageAssembledCarProducer.close();
+
+				if (messagePainterJobAssembledCarHiPrioProducer != null)
+					messagePainterJobAssembledCarHiPrioProducer.close();
+
+				if (messagePainterJobAssembledCarProducer != null)
+					messagePainterJobAssembledCarProducer.close();
+
+				if (messageUpdateDBProducer != null)
+					messageUpdateDBProducer.close();
+
+				if (messageUpdateGUIProducer != null)
+					messageUpdateGUIProducer.close();
+			} catch (JMSException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
-	public void stopListening() {
-		try { if( messageConsumer != null ) messageConsumer.close(); } catch( Exception ex ) {/*ok*/}
-	    try { if( session != null ) session.close();  } catch( Exception ex ) {/*ok*/}
-	    try { if( connection != null ) connection.close();  } catch( Exception ex ) {/*ok*/}
-	    try { if( context != null ) context.close(); } catch( Exception ex ) {/*ok*/}
-	}
-
-	@Override
-	public void onException(JMSException e) {
-		logger.error("Listener-JMSException: " + e.toString());
-	}
-
 	public static void main(String[] args) {
-		 if(args.length != 1) {
-			 logger.error("Provide a numeric ID as argument");
-			 System.exit(-1);
-		 }
-		 Long id = null;
-		 try {
-			 id = Long.parseLong(args[0]);
-		 } catch (Exception ex) {
-			 logger.error("Provide a numeric ID as argument");
-			 System.exit(-1);
-		 }
-		 logger.info("Enter 'quit' to exit AssemblerWorker...");
+		if (args.length != 1) {
+			logger.error("Provide a numeric ID as argument");
+			System.exit(-1);
+		}
+		Long id = null;
+		try {
+			id = Long.parseLong(args[0]);
+		} catch (Exception ex) {
+			logger.error("Provide a numeric ID as argument");
+			System.exit(-1);
+		}
 
 		Assembler assembler = new Assembler(id);
 		Scanner sc = new Scanner(System.in);
 
-		while(!sc.nextLine().equals("quit"));
+		assembler.start();
+		logger.info("Enter 'quit' to exit AssemblerWorker...");
+		while (!sc.nextLine().equals("quit"))
+			;
 
-		assembler.stopListening();
+		assembler.stopWorker();
+
 		logger.info("Stopped Listening properly.");
 
-		logger.info("PainterWorker exited.");
+		logger.info("Assembler exited.");
 	}
-
-
 
 }

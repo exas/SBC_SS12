@@ -13,13 +13,15 @@ public abstract class CarPart implements Serializable {
 	protected long id;
 	protected Long producerId;
 
+	protected Long orderId;
+
 	@Index(label="type")
 	protected CarPartType carPartType;
-	private Long carId;
+	protected Long carId;
 
-	private boolean isFree;
+	protected boolean isFree;
 
-	private boolean isDefect;
+	protected boolean isDefect;
 
 	public CarPart() {
 		this.setCarId(null);
@@ -31,6 +33,14 @@ public abstract class CarPart implements Serializable {
 
 	public void setId(long id) {
 		this.id = id;
+	}
+
+	public Long getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(Long orderId) {
+		this.orderId = orderId;
 	}
 
 	public CarPartType getCarPartType() {

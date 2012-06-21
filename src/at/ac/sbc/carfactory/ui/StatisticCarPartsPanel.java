@@ -9,6 +9,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
 import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarColor;
@@ -59,7 +60,17 @@ public class StatisticCarPartsPanel extends JPanel {
 		if (table == null) {
 			table = new JTable();
 			tableModel = new DefaultTableModel(null, TableHeaders.statisticCarParts);
+
 			table.setModel(tableModel);
+
+			TableColumn col = table.getColumnModel().getColumn( 0 );
+			col.setWidth(60);
+
+			col = table.getColumnModel().getColumn( 2 );
+			col.setWidth(60);
+
+			col = table.getColumnModel().getColumn( 4 );
+			col.setWidth(100);
 		}
 		return table;
 	}
@@ -80,7 +91,7 @@ public class StatisticCarPartsPanel extends JPanel {
 			}
 
 			if (Class.forName(CarMotor.class.getName()).isInstance(part)) {
-				temp[3] = "Motor_Type:" + ((CarMotor)part).getMotorType();
+				temp[3] = "Motor_Type:" + ((CarMotor)part).getMotorType().toString();
 			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();

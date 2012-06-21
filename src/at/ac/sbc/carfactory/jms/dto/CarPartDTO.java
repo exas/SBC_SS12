@@ -11,65 +11,33 @@ public class CarPartDTO implements java.io.Serializable{
 
 	private static final long serialVersionUID = 1L;
 
-	private Long id;
-	private Long producerId;
-	private CarPartType carPartType;
-	private CarColor bodyColor;
-	private Long painterId;
-	private boolean isDefect;
-	private Long carId;
-	private CarMotorType carMotorType;
+	public Long id = null;
+	public Long producerId = null;
+	public CarPartType carPartType = null;
+	public CarColor bodyColor = null;
+	public Long painterId = null;
+	public Boolean isDefect = null;
+	public Long carId = null;
+	public CarMotorType carMotorType = null;
 
+	public Long orderId = null;
+	public CarColor requestedCarColorByOrder = null;
 
-	public Long getId() {
-		return id;
+	public CarPartDTO() {
+		this.id = null;
+		this.producerId = null;
+		this.carPartType = null;
+		this.bodyColor = null;
+		this.painterId = null;
+		this.isDefect = null;
+		this.carId = null;
+		this.carMotorType = null;
+
+		this.orderId = null;
+		this.requestedCarColorByOrder = null;
 	}
-	public void setId(Long id) {
-		this.id = id;
-	}
-	public CarPartType getCarPartType() {
-		return carPartType;
-	}
-	public void setCarPartType(CarPartType carPartType) {
-		this.carPartType = carPartType;
-	}
-	public Long getProducerId() {
-		return producerId;
-	}
-	public void setProducerId(Long producerId) {
-		this.producerId = producerId;
-	}
-	public CarColor getBodyColor() {
-		return bodyColor;
-	}
-	public void setBodyColor(CarColor bodyColor) {
-		this.bodyColor = bodyColor;
-	}
-	public Long getPainterId() {
-		return painterId;
-	}
-	public void setPainterId(Long painterId) {
-		this.painterId = painterId;
-	}
-	public Long getCarId() {
-		return carId;
-	}
-	public void setCarId(Long carId) {
-		this.carId = carId;
-	}
-	public void setIsDefect(boolean isDefect) {
-		this.isDefect = isDefect;
-	}
+
 	public boolean isDefect() {
 		return isDefect;
 	}
-	public CarMotorType getCarMotorType() {
-		return carMotorType;
-	}
-	public void setCarMotorType(CarMotorType carMotorType) {
-		this.carMotorType = carMotorType;
-	}
-
-
-
 }

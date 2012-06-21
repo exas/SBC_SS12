@@ -4,7 +4,6 @@ package at.ac.sbc.carfactory.jms.server;
 import java.util.Hashtable;
 
 
-import javax.annotation.PreDestroy;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.ExceptionListener;
@@ -31,6 +30,7 @@ public class OrderManagementListener implements MessageListener,
 
 	private ConnectionFactory cf;
 	private Connection connection;
+	private Context context;
 	private Session session;
 	private Queue orderQueue;
 	private MessageConsumer messageConsumer;
@@ -38,8 +38,7 @@ public class OrderManagementListener implements MessageListener,
 	private final Logger logger = Logger.getLogger(OrderManagementListener.class);
 
 	public OrderManagementListener() {
-		logger.debug("OrderManagementListener<" + this.toString()
-				+ ">: instantiated");
+		logger.debug("instantiated");
 		setup();
 	}
 
@@ -51,7 +50,7 @@ public class OrderManagementListener implements MessageListener,
 			env.put("java.naming.provider.url", "jnp://localhost:1099");
 			env.put("java.naming.factory.url.pkgs",
 					"org.jboss.naming:org.jnp.interfaces");
-			Context context = new InitialContext(env);
+			context = new InitialContext(env);
 
 			this.cf = (ConnectionFactory) context.lookup("/cf");
 			this.orderQueue = (Queue) context.lookup("/queue/orderQueue");
@@ -69,20 +68,16 @@ public class OrderManagementListener implements MessageListener,
 			// producer = session.createProducer(topic);
 		} catch (Throwable t) {
 			// JMSException could be thrown
-			logger.error("OrderManagementListener<" + this.toString()
-					+ ">:setup:" + "Exception: " + t.toString());
+			logger.error("setup:" + "Exception: " + t.toString());
 		}
 	}
 
 	@Override
 	public void onMessage(Message inMessage) {
-		logger.debug("OrderManagementListener<" + this.toString()
-				+ ">: on Message");
+		logger.debug("on Message");
 
 		if (session == null) {
-			logger.error("OrderManagementListener<"
-					+ this.toString()
-					+ ">:onMessage  Session is NULL, RETURN, no processing of message possibel.");
+			logger.error("onMessage  Session is NULL, RETURN, no processing of message possibel.");
 			return;
 		}
 
@@ -101,9 +96,7 @@ public class OrderManagementListener implements MessageListener,
 					if (inMessage.getStringProperty("type").equals(
 							"updateOrder")) {
 						// Order Update send to Queue
-						logger.debug("<"
-								+ this.hashCode()
-								+ ">: Received message for Order update.");
+						logger.debug("Received message for Order update.");
 
 						//update order
 						if (orderDTO.id != null) {
@@ -115,8 +108,11 @@ public class OrderManagementListener implements MessageListener,
 							"newOrder")) {
 						// new Order send into Queue
 						if (orderDTO.id != null) {
+							logger.debug("Save Order<"+orderDTO.id+">.");
 							//save new Order
 							saveOrder(orderDTO);
+
+							logger.debug("Order<"+orderDTO.id+"> SAVED.");
 						}
 					}
 				}
@@ -131,7 +127,7 @@ public class OrderManagementListener implements MessageListener,
 			te.printStackTrace();
 		} finally {
 			// JMS close connection and session
-			logger.info("JMS:Closing Message Producers!");
+
 
 		}
 
@@ -147,24 +143,25 @@ public class OrderManagementListener implements MessageListener,
 		OrderDaoSimpleImpl.getInstance().saveNewOrder(order);
 	}
 
-	/**
-	 * Closes the connection.
-	 */
-	@PreDestroy
-	public void endConnection() throws RuntimeException {
-		logger.debug("JobManagementListener<" + this.toString()
-				+ ">: PREDESTROY");
+
+	public void stopConnection() throws RuntimeException {
+		logger.debug("DESTROY");
 		try {
+			if (messageConsumer != null) {
+				messageConsumer.close();
+			}
 			if (connection != null) {
 				connection.close();
 			}
 			if (session != null) {
 				session.close();
 			}
+			if(context != null)
+				context.close();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override

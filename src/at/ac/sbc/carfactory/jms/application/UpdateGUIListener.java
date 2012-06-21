@@ -28,84 +28,89 @@ public class UpdateGUIListener implements MessageListener, ExceptionListener {
 
 	private final Logger logger = Logger.getLogger(UpdateGUIListener.class);
 	private CarFactoryManager model = null;
-	
+
 	public UpdateGUIListener(CarFactoryManager model) {
 		this.model = model;
 		logger.debug("UpdateGUIListener<"+this.toString()+">: instantiated");
 	}
-	
+
 	@Override
 	public void onMessage(Message inMessage) {
 		logger.debug("UpdateGUIListener<"+this.toString()+">: on Message -updating GUI");
-		
+
 		ObjectMessage inObjectMessage = null;
         CarDTO carDTO = null;
         CarPartDTO carPartDTO = null;
-        
+
         try {
         	if (inMessage instanceof ObjectMessage) {
     			inObjectMessage = (ObjectMessage) inMessage;
-            	
+
     			if (inObjectMessage.getObject() instanceof CarDTO) {
 	    			carDTO = (CarDTO)inObjectMessage.getObject();
-	            	
-	    			
-	    			Car car = new Car();
-	    			car.setId(carDTO.getId());
-	    			car.setAssemblyWorkerId(carDTO.getAssemblyWorkerId());		
-	    			car.setLogisticWorkerId(carDTO.getLogisticWorkerId());
 
-	    			if(carDTO.getCarBody() != null) {
+	    			Car car = new Car();
+	    			car.setId(carDTO.id);
+	    			car.setAssemblyWorkerId(carDTO.assemblyWorkerId);
+	    			car.setLogisticWorkerId(carDTO.logisticWorkerId);
+	    			car.setDefect(carDTO.isDefect);
+	    			car.setOrderId(carDTO.orderId);
+	    			car.setTestingFinished(carDTO.isTestingFinished);
+	    			car.setTesterAllPartsAssembledWorkerId(carDTO.testerAllPartsAssembledWorkerId);
+	    			car.setTesterIsDefectWorkerId(carDTO.testerIsDefectWorkerId);
+
+	    			if(carDTO.carBody != null) {
 		    			CarBody carBody = new CarBody();
-		    			carBody.setCarId(carDTO.getCarBody().getCarId());
-		    			carBody.setColor(carDTO.getCarBody().getBodyColor());
-		    			carBody.setId(carDTO.getCarBody().getId());
-		    			carBody.setPainterWorkerId(carDTO.getCarBody().getPainterId());
-		    			carBody.setProducerId(carDTO.getCarBody().getProducerId());
+		    			carBody.setCarId(carDTO.carBody.id);
+		    			carBody.setColor(carDTO.carBody.bodyColor);
+		    			carBody.setId(carDTO.carBody.id);
+		    			carBody.setPainterWorkerId(carDTO.carBody.painterId);
+		    			carBody.setProducerId(carDTO.carBody.producerId);
 		    			car.setBody(carBody);
 	    			}
-	    			
-	    			if(carDTO.getCarMotor() != null) {
+
+	    			if(carDTO.carMotor != null) {
 		    			CarMotor carMotor = new CarMotor();
 		    			carMotor.setCarId(car.getId());
-		    			carMotor.setId(carDTO.getCarMotor().getId());
-		    			carMotor.setProducerId(carDTO.getCarMotor().getProducerId());
-		    			
+		    			carMotor.setId(carDTO.carMotor.id);
+		    			carMotor.setProducerId(carDTO.carMotor.producerId);
+		    			carMotor.setMotorType(carDTO.carMotor.carMotorType);
 		    			car.setMotor(carMotor);
 	    			}
-	    			
-	    			List<CarPartDTO> carPartTires = carDTO.getCarTires();
-	    			
+
+	    			List<CarPartDTO> carPartTires = carDTO.carTires;
+
 	    			List<CarTire> carTires = new ArrayList<CarTire>();
-	    			
+
 	    			if(carPartTires != null && !carPartTires.isEmpty()) {
 		    			for(CarPartDTO c: carPartTires) {
 		    				CarTire carTire = new CarTire();
-		    				carTire.setId(c.getId());
-		    				carTire.setCarId(c.getCarId());
-		    				carTire.setProducerId(c.getProducerId());
-		    				
+		    				carTire.setId(c.id);
+		    				carTire.setCarId(c.carId);
+		    				carTire.setProducerId(c.producerId);
+
 		    				carTires.add(carTire);
 		    			}
-		    			
+
 		    			car.setTires(carTires);
 	    			}
-	    			
+
 	    			model.entryOperationFinished(car);
-	    			
+
 		        } else if (inObjectMessage.getObject() instanceof CarPartDTO) {
 	    			carPartDTO = (CarPartDTO)inObjectMessage.getObject();
-	    			
+
 	    			CarPart carPart = null;
-	    			
-	    			switch(carPartDTO.getCarPartType()) {
+
+	    			switch(carPartDTO.carPartType) {
 	    				case CAR_BODY:
 	    					carPart = new CarBody();
-	    					((CarBody) carPart).setColor(carPartDTO.getBodyColor());
-	    					((CarBody) carPart).setPainterWorkerId(carPartDTO.getPainterId());
+	    					((CarBody) carPart).setColor(carPartDTO.bodyColor);
+	    					((CarBody) carPart).setPainterWorkerId(carPartDTO.painterId);
 	    					break;
 	    				case CAR_MOTOR:
 	    					carPart = new CarMotor();
+	    					((CarMotor) carPart).setMotorType(carPartDTO.carMotorType);
 	    					break;
 	    				case CAR_TIRE:
 	    					carPart = new CarTire();
@@ -113,12 +118,14 @@ public class UpdateGUIListener implements MessageListener, ExceptionListener {
 	    				default:
 	    					break;
 	    			}
-	    			
+
 	    			if(carPart != null) {
-	    				carPart.setId(carPartDTO.getId());
-	    				carPart.setCarId(carPartDTO.getCarId());
-	    				carPart.setCarPartType(carPartDTO.getCarPartType());
-	    				carPart.setProducerId(carPartDTO.getProducerId());
+	    				carPart.setId(carPartDTO.id);
+	    				carPart.setCarId(carPartDTO.carId);
+	    				carPart.setCarPartType(carPartDTO.carPartType);
+	    				carPart.setProducerId(carPartDTO.producerId);
+	    				carPart.setDefect(carPartDTO.isDefect);
+	    				carPart.setOrderId(carPartDTO.orderId);
 
 	    				model.entryOperationFinished(carPart);
 	    			}

@@ -18,34 +18,41 @@ import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
+import at.ac.sbc.carfactory.domain.CarPartType;
+
 import at.ac.sbc.carfactory.domain.CarPart;
+
+import at.ac.sbc.carfactory.backend.CarPartDaoSimpleImpl;
+import at.ac.sbc.carfactory.domain.CarTire;
+import at.ac.sbc.carfactory.domain.CarMotor;
+import at.ac.sbc.carfactory.domain.CarBody;
+import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
+import at.ac.sbc.carfactory.backend.CarDaoSimpleImpl;
+import at.ac.sbc.carfactory.domain.Car;
+import at.ac.sbc.carfactory.jms.dto.CarDTO;
 
 import org.apache.log4j.Logger;
 
-import at.ac.sbc.carfactory.backend.CarDaoSimpleImpl;
-import at.ac.sbc.carfactory.backend.CarPartDaoSimpleImpl;
-import at.ac.sbc.carfactory.domain.Car;
-import at.ac.sbc.carfactory.domain.CarBody;
-import at.ac.sbc.carfactory.domain.CarMotor;
-import at.ac.sbc.carfactory.domain.CarTire;
-import at.ac.sbc.carfactory.jms.dto.CarDTO;
-import at.ac.sbc.carfactory.jms.dto.CarPartDTO;
-
-public class JobManagementListener implements MessageListener,
+public class UpdateDBManagementListener implements MessageListener,
 		ExceptionListener {
 
 	private ConnectionFactory cf;
 	private Connection connection;
-	private Context context;
 	private Session session;
-	private Queue carPartQueue;
-	private Queue assemblingJobQueue;
-	private Queue painterJobQueue;
+	private Context context;
+	private Queue updateDBQueue;
 	private MessageConsumer messageConsumer;
 
-	private final Logger logger = Logger.getLogger(JobManagementListener.class);
+	private Queue assemblingJobQueue = null;
+	private Queue painterJobQueue = null;
 
-	public JobManagementListener() {
+	private MessageProducer producerAssemblingJob = null;
+	private MessageProducer producerPainterJob = null;
+
+	private final Logger logger = Logger
+			.getLogger(UpdateDBManagementListener.class);
+
+	public UpdateDBManagementListener() {
 		logger.debug("instantiated");
 		setup();
 	}
@@ -61,26 +68,24 @@ public class JobManagementListener implements MessageListener,
 			context = new InitialContext(env);
 
 			this.cf = (ConnectionFactory) context.lookup("/cf");
-			this.carPartQueue = (Queue) context.lookup("/queue/carPartQueue");
+			this.updateDBQueue = (Queue) context.lookup("/queue/updateDBQueue");
 			this.assemblingJobQueue = (Queue) context
 					.lookup("/queue/assemblingJobQueue");
 			this.painterJobQueue = (Queue) context
 					.lookup("/queue/painterJobQueue");
 
 			connection = cf.createConnection();
-
-			// TODO check at every listener if this is necessary since in
-			// onMessage i create again a Session??
 			session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-			messageConsumer = session.createConsumer(carPartQueue);
+			messageConsumer = session.createConsumer(updateDBQueue);
 			messageConsumer.setMessageListener(this);
+
 			connection.start();
-			// topicConnFactory =
-			// producer = session.createProducer(topic);
+
 		} catch (Throwable t) {
 			// JMSException could be thrown
 			logger.error("setup:" + "Exception: " + t.toString());
+			t.printStackTrace();
 		}
 	}
 
@@ -95,104 +100,101 @@ public class JobManagementListener implements MessageListener,
 
 		ObjectMessage inObjectMessage = null;
 
-		MessageProducer producerAssemblingJob = null;
-		MessageProducer producerPainterJob = null;
+		CarDTO carDTO = null;
 		CarPartDTO carPartDTO = null;
 
 		try {
-			producerAssemblingJob = session.createProducer(assemblingJobQueue);
-			producerPainterJob = session.createProducer(painterJobQueue);
+			this.producerAssemblingJob = session
+					.createProducer(assemblingJobQueue);
+			this.producerPainterJob = session.createProducer(painterJobQueue);
 
 			if (inMessage instanceof ObjectMessage) {
 				inObjectMessage = (ObjectMessage) inMessage;
-				if (inObjectMessage.getObject() instanceof CarPartDTO) {
+
+				if (inObjectMessage.getObject() instanceof CarDTO) {
+					//CAR
+					carDTO = (CarDTO) inObjectMessage.getObject();
+					updateCar(carDTO);
+				}
+				else if (inObjectMessage.getObject() instanceof CarPartDTO) {
+					//CARPART
 					carPartDTO = (CarPartDTO) inObjectMessage.getObject();
 
-					if (inMessage.getStringProperty("type").equals(
-							"newProducedCarPart")) {
-						// Producer send new produced Car Part into Queue
-						if (carPartDTO.id != null) {
+					// Painter sent this message to the Queue
+					logger.debug("Received Msg from Painter (painted Body).");
 
-							switch (carPartDTO.carPartType) {
-							case CAR_BODY:
-								logger.debug("<"
-										+ this.hashCode()
-										+ ">: creating CarBody for in-memory-DB");
-								CarBody carBody = null;
-								carBody = new CarBody(carPartDTO.id,
-										carPartDTO.producerId);
-								carBody.setDefect(carPartDTO.isDefect());
-								carBody.setCarPartType(carPartDTO.carPartType);
+					if (carPartDTO.id != null) {
+						updateCarPart(carPartDTO);
 
-								CarPartDaoSimpleImpl.getInstance()
-										.saveFreeCarBody(carBody);
-								logger.debug("<" + this.hashCode()
-										+ ">: saved CarBody in in-memory-DB");
-								break;
-							case CAR_MOTOR:
-								logger.debug("<" + this.hashCode()
-										+ ">: creating CarMotor in-memory-DB");
-								CarMotor carMotor = null;
-								carMotor = new CarMotor(carPartDTO.id,
-										carPartDTO.producerId);
-								carMotor.setDefect(carPartDTO.isDefect());
-								carMotor.setMotorType(carPartDTO.carMotorType);
-								carMotor.setCarPartType(carPartDTO.carPartType);
-
-								CarPartDaoSimpleImpl.getInstance()
-										.saveFreeCarMotor(carMotor);
-								logger.debug("<" + this.hashCode()
-										+ ">: saved CarMotor in-memory-DB");
-								break;
-							case CAR_TIRE:
-								logger.debug("<" + this.hashCode()
-										+ ">: creating CarTire in-memory-DB");
-								CarTire carTire = null;
-								carTire = new CarTire(carPartDTO.id,
-										carPartDTO.producerId);
-								carTire.setDefect(carPartDTO.isDefect());
-								carTire.setCarPartType(carPartDTO.carPartType);
-
-								CarPartDaoSimpleImpl.getInstance()
-										.saveFreeCarTire(carTire);
-								logger.debug("<" + this.hashCode()
-										+ ">: saved CarTire in-memory-DB");
-								break;
-							default:
-								break;
-							}
-
-							// Check if new AssembleJob or BodyPaintJob is
-							// available and send JobMsg
-							checkForNewJob(producerAssemblingJob,
-									producerPainterJob);
-						}
+						// Check if new AssembleJob or BodyPaintJob is
+						// available and send JobMsg
+						checkForNewJob(producerAssemblingJob,
+								producerPainterJob);
 					}
+
 				}
 			}
-
 		} catch (JMSException e) {
-			logger.error("JobManagementListener.onMessage: JMSException: "
+			logger.error("UpdateDBManagementListener.onMessage: JMSException: "
 					+ e.toString());
 			e.printStackTrace();
 		} catch (Throwable te) {
-			logger.error("JobManagementListener.onMessage: Exception: "
+			logger.error("UpdateDBManagementListener.onMessage: Exception: "
 					+ te.toString());
 			te.printStackTrace();
 		} finally {
-			// JMS close connection and session
-			logger.info("JMS:Closing Message Producers!");
-			try {
-				if (producerAssemblingJob != null)
+			try{
+				if(producerAssemblingJob != null)
 					producerAssemblingJob.close();
-			} catch (Exception ex) {/* ok */
-			}
-			try {
-				if (producerPainterJob != null)
+
+				if(producerPainterJob != null)
 					producerPainterJob.close();
-			} catch (Exception ex) {/* ok */
+
+			} catch (JMSException e) {
+				e.printStackTrace();
 			}
+
 		}
+
+	}
+
+	private void updateCar(CarDTO carDTO) {
+		logger.debug("updateCar");
+
+		return;
+
+//		final Car car = new Car();
+//
+//		final CarBody carBody = new CarBody();
+//		final CarMotor carMotor = new CarMotor();
+//		final CarTire carTire = new CarTire();
+//
+//		// TODO check all lists and then get the one and check all fields to see
+//		// where to put the existing/updated car?
+//		CarDaoSimpleImpl.getInstance()
+//				.updateCarToAssembleById(car.getId(), car);
+	}
+
+	private void updateCarPart(CarPartDTO carPartDTO) {
+		logger.debug("updateCarPart");
+
+		if (carPartDTO.carPartType != CarPartType.CAR_BODY) {
+			logger.debug("Wrong CarPart only CarBody should be updated??");
+			return;
+		}
+
+		// TODO check which part and save and rechcekc before if not double
+		// existent?
+		final CarBody carBody = new CarBody(carPartDTO.id, carPartDTO.carId,
+				carPartDTO.orderId, carPartDTO.painterId,
+				carPartDTO.producerId, carPartDTO.carPartType,
+				carPartDTO.bodyColor, carPartDTO.isDefect);
+
+		if (carBody.getPainterWorkerId() != null) {
+			CarPartDaoSimpleImpl.getInstance().updateCarBodyFromPainter(
+					carBody.getId(), carBody);
+		}
+
 	}
 
 	private void checkForNewJob(MessageProducer producerAssemblingJob,
@@ -222,7 +224,9 @@ public class JobManagementListener implements MessageListener,
 			}
 
 			// assemble is possible
-			logger.debug("AssembleJob is possible (Body,Motor,4xTire reserved).");
+			logger.debug("<"
+					+ this.hashCode()
+					+ ">: AssembleJob is possible (Body,Motor,4xTire reserved).");
 			logger.debug("CarBody:<" + carBody.getId() + ">, Producer:<"
 					+ carBody.getProducerId() + ">");
 			logger.debug("CarMotor:<" + carMotor.getId() + ">, Producer:<"
@@ -241,9 +245,6 @@ public class JobManagementListener implements MessageListener,
 				CarPartDTO carTireDTO = new CarPartDTO();
 				carTireDTO.id = carTire.getId();
 				carTireDTO.producerId = carTire.getProducerId();
-				carTireDTO.carPartType = carTire.getCarPartType();
-				carTireDTO.isDefect = carTire.isDefect();
-
 
 				carTireDTOs.add(carTireDTO);
 
@@ -259,18 +260,12 @@ public class JobManagementListener implements MessageListener,
 			carBodyDTO.bodyColor = carBody.getColor();
 			carBodyDTO.painterId = carBody.getPainterWorkerId();
 			carBodyDTO.producerId = carBody.getProducerId();
-			carBodyDTO.carPartType = carBody.getCarPartType();
-			carBodyDTO.isDefect = carBody.isDefect();
-
 
 			carDTO.carBody = carBodyDTO;
 
 			CarPartDTO carMotorDTO = new CarPartDTO();
 			carMotorDTO.id = carMotor.getId();
 			carMotorDTO.producerId = carMotor.getProducerId();
-			carMotorDTO.carPartType = carMotor.getCarPartType();
-			carMotorDTO.isDefect = carMotor.isDefect();
-			carMotorDTO.carMotorType = carMotor.getMotorType();
 
 			carDTO.carMotor = carMotorDTO;
 
@@ -289,8 +284,6 @@ public class JobManagementListener implements MessageListener,
 			outObjectMessage.setStringProperty("type", "car");
 			// TODO set COLOR if HIPRIO and send to HIPRIO
 			producerAssemblingJob.send(outObjectMessage);
-
-			logger.debug("AssembleJob was send out");
 
 		} else {
 
@@ -313,8 +306,6 @@ public class JobManagementListener implements MessageListener,
 				carBodyDTO.id = new Long(carBody.getId());
 				carBodyDTO.carPartType = carBody.getCarPartType();
 				carBodyDTO.producerId = carBody.getProducerId();
-				carBodyDTO.carPartType = carBody.getCarPartType();
-				carBodyDTO.isDefect = carBody.isDefect();
 
 				// send carBodyDTO to painterJobQueue
 
@@ -327,16 +318,29 @@ public class JobManagementListener implements MessageListener,
 				logger.debug("PainterJob with CarBody<" + carBodyDTO.id
 						+ "> is send out to QUEUE");
 			}
-
 		}
-
 	}
 
 	public void stopConnection() throws RuntimeException {
-		logger.debug("PREDESTROY");
+		logger.debug("DESTROY");
 		try {
-			if (messageConsumer != null)
-				messageConsumer.close();
+
+			logger.info("JMS:Closing Message Producers!");
+			try {
+				if (producerAssemblingJob != null)
+					producerAssemblingJob.close();
+			} catch (Exception ex) {/* ok */
+			}
+			try {
+				if (messageConsumer != null)
+					messageConsumer.close();
+			} catch (Exception ex) {/* ok */
+			}
+			try {
+				if (producerPainterJob != null)
+					producerPainterJob.close();
+			} catch (Exception ex) {/* ok */
+			}
 
 			if (connection != null) {
 				connection.close();
@@ -344,9 +348,9 @@ public class JobManagementListener implements MessageListener,
 			if (session != null) {
 				session.close();
 			}
-			if(context != null)
+			if(context != null) {
 				context.close();
-
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

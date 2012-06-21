@@ -9,6 +9,7 @@ import java.util.Scanner;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
+import org.apache.log4j.Logger;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.core.config.Configuration;
 import org.hornetq.core.config.impl.ConfigurationImpl;
@@ -38,6 +39,9 @@ public class JMSServer {
 	private NamingBeanImpl naming;
 	private JMSConfiguration jmsConfig;
 	private JMSServerManager jmsServer;
+
+	private final static Logger logger = Logger.getLogger(JMSServer.class);
+
 
 	private JMSServer() {
 		Configuration configuration = new ConfigurationImpl();
@@ -106,16 +110,37 @@ public class JMSServer {
 
         JMSQueueConfiguration queueConfig1 = new JMSQueueConfigurationImpl("carPartQueue", null, false, "/queue/carPartQueue");
         JMSQueueConfiguration queueConfig2 = new JMSQueueConfigurationImpl("assemblingJobQueue", null, false, "/queue/assemblingJobQueue");
-        JMSQueueConfiguration queueConfig3 = new JMSQueueConfigurationImpl("painterJobQueue", null, false, "/queue/painterJobQueue");
-        JMSQueueConfiguration queueConfig4 = new JMSQueueConfigurationImpl("assembledCarQueue", null, false, "/queue/assembledCarQueue");
-        JMSQueueConfiguration queueConfig5 = new JMSQueueConfigurationImpl("updateGUIQueue", null, false, "/queue/updateGUIQueue");
-
+        JMSQueueConfiguration queueConfig3 = new JMSQueueConfigurationImpl("assemblingJobHiPrioQueue", null, false, "/queue/assemblingJobHiPrioQueue");
+        JMSQueueConfiguration queueConfig4 = new JMSQueueConfigurationImpl("painterJobQueue", null, false, "/queue/painterJobQueue");
+        JMSQueueConfiguration queueConfig5 = new JMSQueueConfigurationImpl("painterJobHiPrioQueue", null, false, "/queue/painterJobHiPrioQueue");
+        JMSQueueConfiguration queueConfig6 = new JMSQueueConfigurationImpl("assembledCarQueue", null, false, "/queue/assembledCarQueue");
+        JMSQueueConfiguration queueConfig7 = new JMSQueueConfigurationImpl("assembledCarHiPrioQueue", null, false, "/queue/assembledCarHiPrioQueue");
+        JMSQueueConfiguration queueConfig8 = new JMSQueueConfigurationImpl("assembledAndTestedCarQueue", null, false, "/queue/assembledAndTestedCarQueue");
+        JMSQueueConfiguration queueConfig9 = new JMSQueueConfigurationImpl("assembledAndTestedCarHiPrioQueue", null, false, "/queue/assembledAndTestedCarHiPrioQueue");
+        JMSQueueConfiguration queueConfig10 = new JMSQueueConfigurationImpl("defectCarQueue", null, false, "/queue/defectCarQueue");
+        JMSQueueConfiguration queueConfig11 = new JMSQueueConfigurationImpl("defectCarHiPrioQueue", null, false, "/queue/defectCarHiPrioQueue");
+        JMSQueueConfiguration queueConfig12 = new JMSQueueConfigurationImpl("updateGUIQueue", null, false, "/queue/updateGUIQueue");
+        JMSQueueConfiguration queueConfig13 = new JMSQueueConfigurationImpl("updateDBQueue", null, false, "/queue/updateDBQueue");
+        JMSQueueConfiguration queueConfig14 = new JMSQueueConfigurationImpl("orderQueue", null, false, "/queue/orderQueue");
+        JMSQueueConfiguration queueConfig15 = new JMSQueueConfigurationImpl("expiryQueue", null, false, "/queue/expiryQueue");
 
         jmsConfig.getQueueConfigurations().add(queueConfig1);
         jmsConfig.getQueueConfigurations().add(queueConfig2);
         jmsConfig.getQueueConfigurations().add(queueConfig3);
         jmsConfig.getQueueConfigurations().add(queueConfig4);
         jmsConfig.getQueueConfigurations().add(queueConfig5);
+        jmsConfig.getQueueConfigurations().add(queueConfig6);
+        jmsConfig.getQueueConfigurations().add(queueConfig7);
+        jmsConfig.getQueueConfigurations().add(queueConfig8);
+        jmsConfig.getQueueConfigurations().add(queueConfig9);
+        jmsConfig.getQueueConfigurations().add(queueConfig10);
+        jmsConfig.getQueueConfigurations().add(queueConfig11);
+        jmsConfig.getQueueConfigurations().add(queueConfig12);
+        jmsConfig.getQueueConfigurations().add(queueConfig13);
+        jmsConfig.getQueueConfigurations().add(queueConfig14);
+        jmsConfig.getQueueConfigurations().add(queueConfig15);
+
+
 
         try {
 			jmsServer = new JMSServerManagerImpl(hornetqServer, jmsConfig);
@@ -145,11 +170,12 @@ public class JMSServer {
 	}
 
 	public void stop() {
+		logger.info("Server stop function.");
 		try {
 			jmsServer.stop();
 			naming.stop();
 			jndiServer.stop();
-
+			hornetqServer.stop();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -160,17 +186,26 @@ public class JMSServer {
 		JMSServer server = JMSServer.getInstance();
 		server.start();
 
-		@SuppressWarnings("unused")
 		JobManagementListener jobManagementListener = new JobManagementListener();
 
-		@SuppressWarnings("unused")
 		OrderManagementListener orderManagementListener = new OrderManagementListener();
 
+		UpdateDBManagementListener updateDBManagementListener = new UpdateDBManagementListener();
+
+		logger.info("Enter 'quit' to exit PainterWorker...");
 		Scanner sc = new Scanner(System.in);
 
 		while(!sc.nextLine().equals("quit")) {
-			server.stop();
 		}
+
+		jobManagementListener.stopConnection();
+		orderManagementListener.stopConnection();
+		updateDBManagementListener.stopConnection();
+
+		server.stop();
+
+		logger.info("JMSServer exited.");
+		System.exit(0);
 	}
 
 //	public EmbeddedJMS getJms() {
