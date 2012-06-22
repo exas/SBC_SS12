@@ -5,10 +5,9 @@ import java.util.List;
 
 import at.ac.sbc.carfactory.util.TestCase;
 
-
 //Data Transfer Object, just a simple class which holds all relevant data for transfering this object via Messaging/Queues.
 
-public class CarDTO implements java.io.Serializable{
+public class CarDTO implements java.io.Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -29,7 +28,7 @@ public class CarDTO implements java.io.Serializable{
 
 	public List<TestCase> testCases = new ArrayList<TestCase>();
 
-	public boolean isTestingFinished = false;
+	public Boolean isTestingFinished = false;
 
 	public CarDTO() {
 		this.id = null;
@@ -42,5 +41,7 @@ public class CarDTO implements java.io.Serializable{
 		this.logisticWorkerId = null;
 		this.isDefect = null;
 		this.orderId = null;
+		this.testerAllPartsAssembledWorkerId = null;
+		this.testerIsDefectWorkerId = null;
 	}
 }

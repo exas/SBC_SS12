@@ -111,17 +111,12 @@ public class UpdateDBManagementListener implements MessageListener,
 			if (inMessage instanceof ObjectMessage) {
 				inObjectMessage = (ObjectMessage) inMessage;
 
-				if (inObjectMessage.getObject() instanceof CarDTO) {
-					//CAR
-					carDTO = (CarDTO) inObjectMessage.getObject();
-					updateCar(carDTO);
-				}
-				else if (inObjectMessage.getObject() instanceof CarPartDTO) {
-					//CARPART
+				if (inObjectMessage.getObject() instanceof CarPartDTO) {
+					// CARPART
 					carPartDTO = (CarPartDTO) inObjectMessage.getObject();
 
 					// Painter sent this message to the Queue
-					logger.debug("Received Msg from Painter (painted Body).");
+					logger.debug("Received Msg");
 
 					if (carPartDTO.id != null) {
 						updateCarPart(carPartDTO);
@@ -143,11 +138,11 @@ public class UpdateDBManagementListener implements MessageListener,
 					+ te.toString());
 			te.printStackTrace();
 		} finally {
-			try{
-				if(producerAssemblingJob != null)
+			try {
+				if (producerAssemblingJob != null)
 					producerAssemblingJob.close();
 
-				if(producerPainterJob != null)
+				if (producerPainterJob != null)
 					producerPainterJob.close();
 
 			} catch (JMSException e) {
@@ -158,41 +153,52 @@ public class UpdateDBManagementListener implements MessageListener,
 
 	}
 
-	private void updateCar(CarDTO carDTO) {
-		logger.debug("updateCar");
-
-		return;
-
-//		final Car car = new Car();
-//
-//		final CarBody carBody = new CarBody();
-//		final CarMotor carMotor = new CarMotor();
-//		final CarTire carTire = new CarTire();
-//
-//		// TODO check all lists and then get the one and check all fields to see
-//		// where to put the existing/updated car?
-//		CarDaoSimpleImpl.getInstance()
-//				.updateCarToAssembleById(car.getId(), car);
-	}
-
 	private void updateCarPart(CarPartDTO carPartDTO) {
 		logger.debug("updateCarPart");
 
-		if (carPartDTO.carPartType != CarPartType.CAR_BODY) {
-			logger.debug("Wrong CarPart only CarBody should be updated??");
-			return;
-		}
-
 		// TODO check which part and save and rechcekc before if not double
 		// existent?
-		final CarBody carBody = new CarBody(carPartDTO.id, carPartDTO.carId,
-				carPartDTO.orderId, carPartDTO.painterId,
-				carPartDTO.producerId, carPartDTO.carPartType,
-				carPartDTO.bodyColor, carPartDTO.isDefect);
+		if (carPartDTO.carPartType == CarPartType.CAR_BODY) {
+			final CarBody carBody = new CarBody(carPartDTO.id,
+					carPartDTO.carId, carPartDTO.orderId, carPartDTO.painterId,
+					carPartDTO.producerId, carPartDTO.carPartType,
+					carPartDTO.bodyColor, carPartDTO.requestedBodyColorByOrder,
+					carPartDTO.isDefect);
 
-		if (carBody.getPainterWorkerId() != null) {
-			CarPartDaoSimpleImpl.getInstance().updateCarBodyFromPainter(
+			logger.debug("update CARBODY<" + carBody.getId() + ">, carId<"
+					+ carBody.getCarId() + ">, orderId<" + carBody.getOrderId()
+					+ ">, painterId<" + carBody.getPainterWorkerId() + ">, prodId<"
+					+ carBody.getProducerId() + ">, color<" + carBody.getColor().toString()
+					+ ">, requestCol<" + carBody.getRequestedColorByOrder() + ">, isDefect<"+carBody.isDefect()+">");
+
+			CarPartDaoSimpleImpl.getInstance().updateCarBodyById(
 					carBody.getId(), carBody);
+		} else if (carPartDTO.carPartType == CarPartType.CAR_MOTOR) {
+			final CarMotor carMotor = new CarMotor(carPartDTO.id,
+					carPartDTO.carId, carPartDTO.orderId,
+					carPartDTO.producerId, carPartDTO.carPartType,
+					carPartDTO.carMotorType, carPartDTO.isDefect);
+
+			logger.debug("update CarMotor<" + carMotor.getId() + ">, carId<"
+					+ carMotor.getCarId() + ">, orderId<" + carMotor.getOrderId()
+					+ ">, prodId<"
+					+ carMotor.getProducerId() + ">, isDefect<"+carMotor.isDefect()+">, carMotorType<"+carMotor.getMotorType()+">");
+
+			CarPartDaoSimpleImpl.getInstance().updateCarMotorById(
+					carMotor.getId(), carMotor);
+		} else if (carPartDTO.carPartType == CarPartType.CAR_TIRE) {
+			final CarTire carTire = new CarTire(carPartDTO.id,
+					carPartDTO.carId, carPartDTO.orderId,
+					carPartDTO.producerId, carPartDTO.carPartType,
+					carPartDTO.isDefect);
+
+			logger.debug("update CarTire<" + carTire.getId() + ">, carId<"
+					+ carTire.getCarId() + ">, orderId<" + carTire.getOrderId()
+					+ ">, prodId<"
+					+ carTire.getProducerId() + ">, isDefect<"+carTire.isDefect()+">");
+
+			CarPartDaoSimpleImpl.getInstance().updateCarTireById(
+					carTire.getId(), carTire);
 		}
 
 	}
@@ -245,6 +251,9 @@ public class UpdateDBManagementListener implements MessageListener,
 				CarPartDTO carTireDTO = new CarPartDTO();
 				carTireDTO.id = carTire.getId();
 				carTireDTO.producerId = carTire.getProducerId();
+				carTireDTO.carPartType = carTire.getCarPartType();
+				carTireDTO.isDefect = carTire.isDefect();
+				carTireDTO.orderId = carTire.getOrderId();
 
 				carTireDTOs.add(carTireDTO);
 
@@ -260,12 +269,19 @@ public class UpdateDBManagementListener implements MessageListener,
 			carBodyDTO.bodyColor = carBody.getColor();
 			carBodyDTO.painterId = carBody.getPainterWorkerId();
 			carBodyDTO.producerId = carBody.getProducerId();
+			carBodyDTO.carPartType = carBody.getCarPartType();
+			carBodyDTO.isDefect = carBody.isDefect();
+			carBodyDTO.orderId = carMotor.getOrderId();
 
 			carDTO.carBody = carBodyDTO;
 
 			CarPartDTO carMotorDTO = new CarPartDTO();
 			carMotorDTO.id = carMotor.getId();
 			carMotorDTO.producerId = carMotor.getProducerId();
+			carMotorDTO.carPartType = carMotor.getCarPartType();
+			carMotorDTO.isDefect = carMotor.isDefect();
+			carMotorDTO.carMotorType = carMotor.getMotorType();
+			carMotorDTO.orderId = carMotor.getOrderId();
 
 			carDTO.carMotor = carMotorDTO;
 
@@ -276,6 +292,7 @@ public class UpdateDBManagementListener implements MessageListener,
 
 			if (car.getId() != null) {
 				carDTO.id = car.getId();
+				carDTO.orderId = car.getOrderId();
 			}
 
 			// send carDTO to assemblingJobQueue
@@ -306,6 +323,9 @@ public class UpdateDBManagementListener implements MessageListener,
 				carBodyDTO.id = new Long(carBody.getId());
 				carBodyDTO.carPartType = carBody.getCarPartType();
 				carBodyDTO.producerId = carBody.getProducerId();
+				carBodyDTO.carPartType = carBody.getCarPartType();
+				carBodyDTO.isDefect = carBody.isDefect();
+				carBodyDTO.orderId = carBody.getOrderId();
 
 				// send carBodyDTO to painterJobQueue
 
@@ -348,7 +368,7 @@ public class UpdateDBManagementListener implements MessageListener,
 			if (session != null) {
 				session.close();
 			}
-			if(context != null) {
+			if (context != null) {
 				context.close();
 			}
 		} catch (Exception e) {

@@ -80,6 +80,13 @@ public class Tester extends Worker {
 					.lookup("/queue/assembledCarQueue");
 			this.assembledCarHiPrioQueue = (Queue) context
 					.lookup("/queue/assembledCarHiPrioQueue");
+			this.assembledAndTestedCarQueue = (Queue) context
+					.lookup("/queue/assembledAndTestedCarQueue");
+			this.assembledAndTestedCarHiPrioQueue = (Queue) context
+					.lookup("/queue/assembledAndTestedCarHiPrioQueue");
+
+
+
 			this.updateGUIQueue = (Queue) context
 					.lookup("/queue/updateGUIQueue");
 			this.updateDBQueue = (Queue) context.lookup("/queue/updateDBQueue");
@@ -112,7 +119,7 @@ public class Tester extends Worker {
 
 	@Override
 	public void receiveMessage() {
-		logger.debug("Tester<" + this.getWorkerId() + ">: receiveMessage");
+//		logger.debug("Tester<" + this.getWorkerId() + ">: receiveMessage");
 
 		if (session == null) {
 			logger.error("Tester<"
@@ -256,7 +263,7 @@ public class Tester extends Worker {
 							} else {
 
 								// SEND again to assembled car with other Info
-								outObjectMessage.setStringProperty("testType",
+								outObjectMessage.setStringProperty("type",
 										testCaseType.getNext().toString());
 
 								messageAssembledCarHiPrioProducer
@@ -293,8 +300,10 @@ public class Tester extends Worker {
 							} else {
 								// TESTING NOT FINISHED
 								// SEND again to assembled car with other Info
-								outObjectMessage.setStringProperty("testType",
-										testCaseType.getNext().toString());
+
+								String nextCaseTypeString = testCaseType.getNext().toString();
+								outObjectMessage.setStringProperty("type",nextCaseTypeString
+										);
 
 								messageAssembledCarProducer
 										.send(outObjectMessage);

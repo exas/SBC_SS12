@@ -4,12 +4,18 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.EventListener;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
@@ -118,9 +124,6 @@ public class OrderPanel extends JPanel {
         c.weighty = 0;
         c.gridwidth = 1;
         this.add(createOrderBt, c);
-
-
-
 	}
 
 	private JTable initOrderTable() {
@@ -130,6 +133,39 @@ public class OrderPanel extends JPanel {
 			table.setModel(tableModel);
 			//table.setModel(getMyTableModel());
 
+			table.addMouseListener(new MouseAdapter() {
+				private void maybeShowPopup(MouseEvent e) {
+					if (e.isPopupTrigger() && table.isEnabled()) {
+						Point p = new Point(e.getX(), e.getY());
+						//int col = table.columnAtPoint(p);
+						int row = table.rowAtPoint(p);
+						table.setRowSelectionInterval(row, row);
+
+						// translate table index to model index
+						//int mcol = table.getColumn(table.getColumnName(col)).getModelIndex();
+
+						if (row >= 0 && row < table.getRowCount()) {
+							// create popup menu...
+							JPopupMenu contextMenu = createContextMenu(row);
+
+							// ... and show it
+							if ((contextMenu != null) && (contextMenu.getComponentCount() > 0)) {
+								contextMenu.show(table, p.x, p.y);
+							}
+						}
+					}
+				}
+
+				@Override
+				public void mousePressed(MouseEvent e) {
+					maybeShowPopup(e);
+				}
+
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					maybeShowPopup(e);
+				}
+			});
 		}
 
 		this.table.getTableHeader().setDefaultRenderer(
@@ -167,6 +203,24 @@ public class OrderPanel extends JPanel {
             }
         }); */
 		return table;
+	}
+
+	private JPopupMenu createContextMenu(final int rowIndex) {
+		JPopupMenu contextMenu = new JPopupMenu();
+
+		JMenuItem orderDetailsMenuItem = new JMenuItem();
+		orderDetailsMenuItem.setText("Order Details");
+		orderDetailsMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				long orderId = (Long)table.getValueAt(rowIndex, 0);
+				new OrderDetailsPanel(orderId, OrderPanel.this.parent);
+			}
+		});
+
+		contextMenu.add(orderDetailsMenuItem);
+
+		return contextMenu;
 	}
 
 	public void addOrder(Order order) {

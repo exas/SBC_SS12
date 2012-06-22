@@ -1,5 +1,6 @@
 package at.ac.sbc.carfactory.util;
 
+import java.io.Serializable;
 import java.util.List;
 
 import at.ac.sbc.carfactory.domain.CarTire;
@@ -12,11 +13,13 @@ import at.ac.sbc.carfactory.domain.Car;
 
 import at.ac.sbc.carfactory.jms.dto.CarDTO;
 
-public class TestCase {
+public class TestCase implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 
 	private TestCaseType testCaseType;
 
-	private boolean isTestOK;
+	private Boolean isTestOK;
 
 	public TestCase(TestCaseType testCaseType) {
 		this.setTestCaseType(testCaseType);
@@ -30,15 +33,15 @@ public class TestCase {
 		this.testCaseType = testCaseType;
 	}
 
-	public boolean isTestOK() {
+	public Boolean isTestOK() {
 		return isTestOK;
 	}
 
-	public void setIsTestOK(boolean isTestOK) {
+	public void setIsTestOK(Boolean isTestOK) {
 		this.isTestOK = isTestOK;
 	}
 
-	public boolean test(CarDTO carDTO) {
+	public Boolean test(CarDTO carDTO) {
 		// check first for which type of Test this TestCase is
 		if (this.testCaseType.equals(TestCaseType.CHECK_ALL_PARTS)) {
 			// check if all parts are here
@@ -67,7 +70,7 @@ public class TestCase {
 	}
 
 	//true if test is OK and FALSE if testfailed!
-	public boolean test(Car car) {
+	public Boolean test(Car car) {
 		// check first for which type of Test this TestCase is
 		if (this.testCaseType.equals(TestCaseType.CHECK_ALL_PARTS)) {
 			// check if all parts are here
@@ -93,7 +96,7 @@ public class TestCase {
 	}
 
 	//for both carTireDTO and carTire objects
-	private boolean checkTiresOnDefect(List<?> carTires) {
+	private Boolean checkTiresOnDefect(List<?> carTires) {
 		boolean isDefect = false;
 
 		for (Object object : carTires) {

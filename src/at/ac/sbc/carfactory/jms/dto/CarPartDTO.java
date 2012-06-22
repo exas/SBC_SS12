@@ -21,7 +21,7 @@ public class CarPartDTO implements java.io.Serializable{
 	public CarMotorType carMotorType = null;
 
 	public Long orderId = null;
-	public CarColor requestedCarColorByOrder = null;
+	public CarColor requestedBodyColorByOrder = null;
 
 	public CarPartDTO() {
 		this.id = null;
@@ -34,7 +34,7 @@ public class CarPartDTO implements java.io.Serializable{
 		this.carMotorType = null;
 
 		this.orderId = null;
-		this.requestedCarColorByOrder = null;
+		this.requestedBodyColorByOrder = null;
 	}
 
 	public boolean isDefect() {

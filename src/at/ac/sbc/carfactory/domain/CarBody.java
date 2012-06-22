@@ -7,25 +7,30 @@ import org.mozartspaces.capi3.Queryable;
 public class CarBody extends CarPart {
 
 	private static final long serialVersionUID = 5596880421243550656L;
-	@Index(label="painted")
+	@Index(label = "painted")
 	private CarColor color;
 	private Long painterWorkerId;
+	private CarColor requestedColorByOrder;
 
 	public CarBody() {
 		this.color = null;
+		this.setRequestedColorByOrder(null);
 		this.carPartType = CarPartType.CAR_BODY;
 	}
 
 	public CarBody(Long id, Long producerId) {
 		super();
+
 		this.id = id;
 		this.producerId = producerId;
 		this.color = null;
+		this.setRequestedColorByOrder(null);
 		this.carPartType = CarPartType.CAR_BODY;
 	}
 
 	public CarBody(Long id, Long carId, Long orderId, Long painterId,
-			Long producerId, CarPartType carPartType, CarColor bodyColor, Boolean isDefect) {
+			Long producerId, CarPartType carPartType, CarColor bodyColor,
+			CarColor requestedColorByOrder, Boolean isDefect) {
 		super();
 		this.id = id;
 		this.carId = carId;
@@ -34,6 +39,7 @@ public class CarBody extends CarPart {
 		this.producerId = producerId;
 		this.carPartType = carPartType;
 		this.color = bodyColor;
+		this.setRequestedColorByOrder(requestedColorByOrder);
 		this.isDefect = isDefect;
 	}
 
@@ -43,7 +49,7 @@ public class CarBody extends CarPart {
 	}
 
 	public boolean isPainted() {
-		if(this.color == null) {
+		if (this.color == null) {
 			return false;
 		}
 		return true;
@@ -63,5 +69,13 @@ public class CarBody extends CarPart {
 
 	public void setPainterWorkerId(Long painterWorkerId) {
 		this.painterWorkerId = painterWorkerId;
+	}
+
+	public CarColor getRequestedColorByOrder() {
+		return requestedColorByOrder;
+	}
+
+	public void setRequestedColorByOrder(CarColor requestedColorByOrder) {
+		this.requestedColorByOrder = requestedColorByOrder;
 	}
 }

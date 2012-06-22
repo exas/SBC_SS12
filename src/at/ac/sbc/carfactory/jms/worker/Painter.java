@@ -2,6 +2,7 @@ package at.ac.sbc.carfactory.jms.worker;
 
 
 import java.util.Hashtable;
+import java.util.Random;
 import java.util.Scanner;
 
 import org.apache.log4j.Logger;
@@ -17,6 +18,8 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+
+import at.ac.sbc.carfactory.util.TestCaseType;
 
 import at.ac.sbc.carfactory.domain.CarColor;
 import at.ac.sbc.carfactory.domain.CarPartType;
@@ -111,7 +114,7 @@ public class Painter extends Worker {
 
 	@Override
 	public void receiveMessage() {
-		logger.debug("<"+this.getWorkerId()+">: receiveMessage");
+//		logger.debug("<"+this.getWorkerId()+">: receiveMessage");
 
 		if(session == null) {
     		logger.error("<"+this.getWorkerId()+">:receiveMessage  Session is NULL, RETURN, no processing of message possibel.");
@@ -185,6 +188,15 @@ public class Painter extends Worker {
             			//update GUI
             			messageUpdateGUIProducer.send(outObjectMessage);
             			logger.debug("<"+this.getWorkerId()+">: Assembled Car is painted - Update GUI Queue, Msg sent.");
+
+            			//SET TEST TYPE
+            			//get random value
+						Random rn = new Random();
+						//gets random value either 0,1,2  (excl. 3 !)
+						int randomTestType = rn.nextInt(2);
+
+						TestCaseType testCaseType = TestCaseType.getEnumByValue(randomTestType);
+						outObjectMessage.setStringProperty("type", testCaseType.toString());
 
             			//check if highprio by checking if orderId is set and send to other QUEUE?
             			if(carDTO.orderId != null) {

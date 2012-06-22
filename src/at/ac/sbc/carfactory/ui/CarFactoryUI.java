@@ -56,7 +56,7 @@ public class CarFactoryUI extends View implements DomainListener, LogListener, W
 		this.model = model;
 		//this.carFactoryManager = carFactoryManager;
 		this.setTitle("Car-Factory");
-		this.setSize(new Dimension(640, 480));
+		this.setSize(new Dimension(1024, 768));
 
 		this.addWindowListener(this);
 
@@ -64,7 +64,7 @@ public class CarFactoryUI extends View implements DomainListener, LogListener, W
 		//this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		this.setLayout(new GridBagLayout());
-        this.setMinimumSize(new Dimension(640, 480));
+        this.setMinimumSize(new Dimension(1024, 768));
 		this.setVisible(true);
 
 		this.initalizeMenu();

@@ -1,6 +1,7 @@
 package at.ac.sbc.carfactory.jms.worker;
 
 import java.util.Hashtable;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.jms.Connection;
@@ -15,6 +16,12 @@ import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+
+import at.ac.sbc.carfactory.util.TestCaseType;
+
+import at.ac.sbc.carfactory.util.TestCase;
+
+import at.ac.sbc.carfactory.domain.CarMotorType;
 
 import org.apache.log4j.Logger;
 
@@ -100,7 +107,7 @@ public class Assembler extends Worker {
 			connection.start();
 		} catch (Throwable t) {
 			// JMSException could be thrown
-			logger.error("setupConnection<" + this.getId() + ">:setup:"
+			logger.error("setupConnection<" + this.getWorkerId() + ">:setup:"
 					+ "Exception: " + t.toString());
 			t.printStackTrace();
 		}
@@ -134,7 +141,7 @@ public class Assembler extends Worker {
 
 	@Override
 	public void receiveMessage() {
-		logger.debug("<" + this.getWorkerId() + ">: receiveMessage");
+//		logger.debug("<" + this.getWorkerId() + ">: receiveMessage");
 
 		if (session == null) {
 			logger.error("<"
@@ -167,11 +174,11 @@ public class Assembler extends Worker {
 	public void processMessage(Message inMessage) {
 
 		try {
-			logger.debug("<" + this.getId() + ">: on Message");
+			logger.debug("<" + this.getWorkerId() + ">: on Message");
 
 			if (session == null) {
 				logger.error("<"
-						+ this.getId()
+						+ this.getWorkerId()
 						+ ">:onMessage  Session is NULL, RETURN, no processing of message possibel.");
 				return;
 			}
@@ -201,11 +208,11 @@ public class Assembler extends Worker {
 
 					// Server sent this message to the Queue
 					logger.debug("<"
-							+ this.getId()
+							+ this.getWorkerId()
 							+ ">: Received Msg from Server JobManagement Car to Assemble.");
 
 					if (carDTO.id != null) {
-						carDTO.assemblyWorkerId = (this.getId());
+						carDTO.assemblyWorkerId = (this.getWorkerId());
 
 						outObjectMessage = session.createObjectMessage(carDTO);
 
@@ -213,6 +220,14 @@ public class Assembler extends Worker {
 						if (carDTO.carBody.bodyColor != null) {
 							// send CarDTO to assembledCarQueue
 
+							//SET TEST TYPE
+							//get random value
+							Random rn = new Random();
+							//gets random value either 0,1,2  (excl. 3 !)
+							int randomTestType = rn.nextInt(2);
+
+							TestCaseType testCaseType = TestCaseType.getEnumByValue(randomTestType);
+							outObjectMessage.setStringProperty("type", testCaseType.toString());
 							// update DB
 							messageUpdateDBProducer.send(outObjectMessage);
 							logger.debug("<"
@@ -230,12 +245,13 @@ public class Assembler extends Worker {
 							// check if highprio by checking if orderId is set
 							// and send to other QUEUE?
 							if (carDTO.orderId != null) {
+
 								messageAssembledCarHiPrioProducer
 										.send(outObjectMessage);
 								logger.debug("HiPrio - Order<"
 										+ carDTO.orderId
 										+ "> Assembler<"
-										+ this.getId()
+										+ this.getWorkerId()
 										+ ">: AssembledCar with Car<"
 										+ carDTO.id
 										+ "> is send out to assembledCarHiPrioQUEUE");
@@ -243,7 +259,7 @@ public class Assembler extends Worker {
 								messageAssembledCarProducer
 										.send(outObjectMessage);
 								logger.debug("Low Prio no OrderId <"
-										+ this.getId()
+										+ this.getWorkerId()
 										+ ">: AssembledCar with Car<"
 										+ carDTO.id
 										+ "> is send out to assembledCarQUEUE");
@@ -251,7 +267,7 @@ public class Assembler extends Worker {
 
 						} else {
 							// send CarDTO to painterJobQueue
-							outObjectMessage.setStringProperty("type", "car");
+
 							// TODO if HIpprio add Color to TYPE and send to
 							// HiPrio
 
@@ -272,20 +288,22 @@ public class Assembler extends Worker {
 							// check if highprio by checking if orderId is set
 							// and send to other QUEUE?
 							if (carDTO.orderId != null) {
+								outObjectMessage.setStringProperty("type", "car_"+carDTO.carBody.requestedBodyColorByOrder.toString());
 								messagePainterJobAssembledCarHiPrioProducer
 										.send(outObjectMessage);
 								logger.debug("HiPrio - Order<"
 										+ carDTO.orderId
 										+ "> Assembler<"
-										+ this.getId()
+										+ this.getWorkerId()
 										+ ">: AssembledCar with Car<"
 										+ carDTO.id
 										+ "> is send out to painterJobCarHiPrioQUEUE");
 							} else {
+								outObjectMessage.setStringProperty("type", "car");
 								messagePainterJobAssembledCarProducer
 										.send(outObjectMessage);
 								logger.debug("Low Prio no OrderId <"
-										+ this.getId()
+										+ this.getWorkerId()
 										+ ">: AssembledCar with Car<"
 										+ carDTO.id
 										+ "> is send out to painterJobCarQUEUE");

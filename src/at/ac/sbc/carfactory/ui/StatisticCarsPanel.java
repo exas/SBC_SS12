@@ -13,6 +13,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
 import at.ac.sbc.carfactory.domain.Car;
 import at.ac.sbc.carfactory.domain.CarBody;
@@ -47,7 +48,7 @@ public class StatisticCarsPanel extends JPanel {
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
 		c.anchor = GridBagConstraints.LINE_START; c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 0.65; c.gridwidth = 1;
+		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 0.60; c.gridwidth = 1;
 		this.add(tableScrollPane, c);
 
 		carInfoTextArea = new JTextArea();
@@ -55,7 +56,7 @@ public class StatisticCarsPanel extends JPanel {
 		JScrollPane carInfoTextAreaScrollPane = new JScrollPane(this.carInfoTextArea);
 
 		c.anchor = GridBagConstraints.LINE_START; c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 1; c.weightx = 1; c.weighty = 0.35; c.gridwidth = 1;
+		c.insets = new Insets(10, 10, 10, 10); c.gridx = 0; c.gridy = 1; c.weightx = 1; c.weighty = 0.40; c.gridwidth = 1;
 		this.add(carInfoTextAreaScrollPane, c);
 	}
 
@@ -74,6 +75,45 @@ public class StatisticCarsPanel extends JPanel {
 			};
 
 			table.setModel(tableModel);
+
+			table.setModel(tableModel);
+
+			TableColumn col = table.getColumnModel().getColumn( 0 );
+			col.setMaxWidth(40);
+			col.setMinWidth(40);
+
+			col = table.getColumnModel().getColumn( 1 );
+			col.setMaxWidth(40);
+			col.setMinWidth(40);
+
+			col = table.getColumnModel().getColumn( 2 );
+			col.setMaxWidth(40);
+			col.setMinWidth(40);
+
+			col = table.getColumnModel().getColumn( 4 );
+			col.setMaxWidth(65);
+			col.setMinWidth(65);
+
+			col = table.getColumnModel().getColumn( 5 );
+			col.setMaxWidth(50);
+			col.setMinWidth(50);
+
+			col = table.getColumnModel().getColumn( 6 );
+			col.setMaxWidth(50);
+			col.setMinWidth(50);
+
+			col = table.getColumnModel().getColumn( 7 );
+			col.setMaxWidth(50);
+			col.setMinWidth(50);
+
+			col = table.getColumnModel().getColumn( 10 );
+			col.setMaxWidth(30);
+			col.setMinWidth(30);
+
+			col = table.getColumnModel().getColumn( 11 );
+			col.setMaxWidth(30);
+			col.setMinWidth(30);
+
 			table.addMouseListener(new MouseAdapter() {
 				private void maybeShowInfo(MouseEvent e) {
 					if (e.isPopupTrigger() && table.isEnabled()) {
@@ -113,27 +153,34 @@ public class StatisticCarsPanel extends JPanel {
 		String tireIDs = (String)table.getValueAt(rowIndex, 3);
 		Long assemblerID = (Long)table.getValueAt(rowIndex, 4);
 		Long logisticianID = (Long)table.getValueAt(rowIndex, 5);
+		Long orderId = (Long)table.getValueAt(rowIndex, 6);
+		Boolean isDefect = (Boolean)table.getValueAt(rowIndex, 7);
+		Long tester1_allParts = (Long)table.getValueAt(rowIndex, 10);
+		Long tester2_defectParts = (Long)table.getValueAt(rowIndex, 11);
 
 		this.carInfoTextArea.setText("");
 		//this.carInfoTextArea.append("Car [" + carID + "]");
 
 		String line1_carText = "";
-//		String line2_assemblerText = "\n";
+		String line2_carDetails = "\n";
 //		String line3_logisticianText = "\n";
 		String line4_carBodyText =  "\n    ";
 		String line5_carMotorText = "\n    ";
 		String line6_carTiresText = "\n    ";
 
-		line1_carText += "Car [" + carID + "]: { Assembler["+assemblerID+"], ";
+		line1_carText += "Car [" + carID + "]: { CarParts: ";
+		line2_carDetails += "CarDetails: { OrderId<"+orderId+">, isDefect<"+isDefect+"> Assembler["+assemblerID+"], ";
 
 		if((logisticianID != null) && (logisticianID.equals("") == false)) {
-			line1_carText += "Logistician[" + logisticianID + "], CarParts::";
+			line2_carDetails += "Logistician[" + logisticianID + "], ";
 		}
+		line2_carDetails += "Tester1_AllParts:["+tester1_allParts+"], Tester2_DefectParts["+tester2_defectParts+"] }";
+
 
 		CarBody carBody = (CarBody)this.parent.getCarPart(bodyID, CarPartType.CAR_BODY);
 		if(carBody != null) {
 			line1_carText += "Body["+bodyID+"], ";
-			line4_carBodyText += "Body["+bodyID+"]: { Producer["+carBody.getProducerId()+"], ";
+			line4_carBodyText += "Body["+bodyID+"]: { isDefect: <"+carBody.isDefect() +"> Producer["+carBody.getProducerId()+"], ";
 
 			//this.carInfoTextArea.append("\tBody: " + bodyID + "\n");
 			//this.carInfoTextArea.append("\t\tProducer: " + carBody.getProducerId() + "\n");
@@ -147,7 +194,7 @@ public class StatisticCarsPanel extends JPanel {
 		if(carMotor != null) {
 			line1_carText += "Motor["+motorID+"], ";
 
-			line5_carMotorText += "Motor["+motorID+"]: { Producer["+carMotor.getProducerId()+"], ";
+			line5_carMotorText += "Motor["+motorID+"]: { isDefect: <"+carMotor.isDefect() +"> Producer["+carMotor.getProducerId()+"], ";
 			line5_carMotorText += "Type: "+carMotor.getMotorType()+ " }";
 
 			//this.carInfoTextArea.append("\tMotor: " + motorID + "\n");
@@ -162,7 +209,7 @@ public class StatisticCarsPanel extends JPanel {
 			CarTire carTire = (CarTire)this.parent.getCarPart(Long.parseLong(tireIDsArr[i].trim()), CarPartType.CAR_TIRE);
 			if(carTire != null) {
 				line1_carText += "T["+carTire.getId()+"], ";
-				line6_carTiresText += " T["+carTire.getId() +"]: {Prod["+carTire.getProducerId()+"]}, ";
+				line6_carTiresText += " T["+carTire.getId() +"]: {isDefect: <"+carTire.isDefect() +"> Prod["+carTire.getProducerId()+"]}, ";
 
 				//this.carInfoTextArea.append("\t\tTire: " + carTire.getId() + "\n");
 				//this.carInfoTextArea.append("\t\t\tProducer: " + carTire.getProducerId() + "\n");
@@ -187,7 +234,7 @@ public class StatisticCarsPanel extends JPanel {
 //		}
 
 		this.carInfoTextArea.append(line1_carText);
-		//this.carInfoTextArea.append(line2_assemblerText);
+		this.carInfoTextArea.append(line2_carDetails);
 		//this.carInfoTextArea.append(line3_logisticianText);
 		this.carInfoTextArea.append(line4_carBodyText);
 		this.carInfoTextArea.append(line5_carMotorText);
@@ -197,7 +244,7 @@ public class StatisticCarsPanel extends JPanel {
 
 	public void carUpdate(Car car) {
 		int row = this.findCar(car);
-		Object[] temp = new Object[7];
+		Object[] temp = new Object[12];
 		temp[0] = car.getId();
 		temp[1] = car.getBody().getId();
 		temp[2] = car.getMotor().getId();
@@ -214,8 +261,15 @@ public class StatisticCarsPanel extends JPanel {
 		temp[4] = car.getAssemblyWorkerId();
 		temp[5] = car.getLogisticWorkerId();
 		if(temp[5] != null) {
-			temp[6] = true;
+			temp[9] = true;
 		}
+
+		temp[6] = car.getOrderId();
+		temp[7] = car.isDefect();
+		temp[8] = car.isTestingFinished();
+		temp[10] = car.getTesterAllPartsAssembledWorkerId();
+		temp[11] = car.getTesterIsDefectWorkerId();
+
 		if(row == -1) {
 			System.out.println("DIDN'T FIND CAR " + car.getId());
 			this.tableModel.addRow(temp);

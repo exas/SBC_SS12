@@ -1,7 +1,9 @@
 package at.ac.sbc.carfactory.jms.server;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.jms.Connection;
@@ -17,6 +19,12 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+
+import at.ac.sbc.carfactory.domain.CarPartType;
+
+import at.ac.sbc.carfactory.domain.Order;
+
+import at.ac.sbc.carfactory.backend.OrderDaoSimpleImpl;
 
 import at.ac.sbc.carfactory.domain.CarPart;
 
@@ -40,7 +48,13 @@ public class JobManagementListener implements MessageListener,
 	private Session session;
 	private Queue carPartQueue;
 	private Queue assemblingJobQueue;
+	private Queue assemblingJobHiPrioQueue;
+
 	private Queue painterJobQueue;
+	private Queue painterJobHiPrioQueue;
+
+	private Queue updateGUIQueue;
+
 	private MessageConsumer messageConsumer;
 
 	private final Logger logger = Logger.getLogger(JobManagementListener.class);
@@ -66,6 +80,14 @@ public class JobManagementListener implements MessageListener,
 					.lookup("/queue/assemblingJobQueue");
 			this.painterJobQueue = (Queue) context
 					.lookup("/queue/painterJobQueue");
+
+			this.assemblingJobHiPrioQueue = (Queue) context
+					.lookup("/queue/assemblingJobHiPrioQueue");
+			this.painterJobHiPrioQueue = (Queue) context
+					.lookup("/queue/painterJobHiPrioQueue");
+
+			this.updateGUIQueue = (Queue) context
+					.lookup("/queue/updateGUIQueue");
 
 			connection = cf.createConnection();
 
@@ -97,11 +119,21 @@ public class JobManagementListener implements MessageListener,
 
 		MessageProducer producerAssemblingJob = null;
 		MessageProducer producerPainterJob = null;
+		MessageProducer producerAssemblingJobHiPrio = null;
+		MessageProducer producerPainterJobHiPrio = null;
+		MessageProducer messageUpdateGUIProducer = null;
+
 		CarPartDTO carPartDTO = null;
 
 		try {
 			producerAssemblingJob = session.createProducer(assemblingJobQueue);
 			producerPainterJob = session.createProducer(painterJobQueue);
+			messageUpdateGUIProducer = session.createProducer(updateGUIQueue);
+
+			producerAssemblingJobHiPrio = session
+					.createProducer(assemblingJobHiPrioQueue);
+			producerPainterJobHiPrio = session
+					.createProducer(painterJobHiPrioQueue);
 
 			if (inMessage instanceof ObjectMessage) {
 				inObjectMessage = (ObjectMessage) inMessage;
@@ -162,6 +194,11 @@ public class JobManagementListener implements MessageListener,
 								break;
 							}
 
+							checkOrders(messageUpdateGUIProducer);
+
+							checkForNewJobByOrders(producerAssemblingJobHiPrio,
+									producerPainterJobHiPrio);
+
 							// Check if new AssembleJob or BodyPaintJob is
 							// available and send JobMsg
 							checkForNewJob(producerAssemblingJob,
@@ -183,14 +220,270 @@ public class JobManagementListener implements MessageListener,
 			// JMS close connection and session
 			logger.info("JMS:Closing Message Producers!");
 			try {
+				if (messageUpdateGUIProducer != null)
+					messageUpdateGUIProducer.close();
+
 				if (producerAssemblingJob != null)
 					producerAssemblingJob.close();
-			} catch (Exception ex) {/* ok */
-			}
-			try {
+
 				if (producerPainterJob != null)
 					producerPainterJob.close();
-			} catch (Exception ex) {/* ok */
+
+				if (producerAssemblingJobHiPrio != null)
+					producerAssemblingJobHiPrio.close();
+
+				if (producerPainterJobHiPrio != null)
+					producerPainterJobHiPrio.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+
+	private void checkForNewJobByOrders(
+			MessageProducer producerAssemblingJobHiPrio,
+			MessageProducer producerPainterJobHiPrio) throws JMSException {
+
+		ObjectMessage outObjectMessage = null;
+
+		// for all orders check if relevant parts can be assigned?
+		Collection<Order> syncCollection = OrderDaoSimpleImpl.getInstance()
+				.getAllNewOrders();
+
+		synchronized (syncCollection) {
+			if (syncCollection.isEmpty()) {
+				return;
+			}
+			Iterator<Order> iterator = syncCollection.iterator();
+
+			while (iterator.hasNext()) {
+				Order order = iterator.next();
+
+				List<CarPart> carParts = order.getAllCarPartsForAssembleJob();
+
+				// check if full assemble job is possible
+				if (carParts != null && !carParts.isEmpty()) {
+
+					CarBody carBody = null;
+					CarMotor carMotor = null;
+					List<CarTire> carTires = new ArrayList<CarTire>();
+
+					// assign all parts to specific objects back
+					for (CarPart carPart : carParts) {
+						if (carPart instanceof CarTire) {
+							CarTire carTire = (CarTire) carPart;
+							carTires.add(carTire);
+						} else if (carPart instanceof CarBody) {
+							carBody = (CarBody) carPart;
+						} else if (carPart instanceof CarMotor) {
+							carMotor = (CarMotor) carPart;
+						}
+					}
+
+					// assemble is possible
+					logger.debug("HiPrio OrderId<"
+							+ carBody.getOrderId()
+							+ "> AssembleJob is possible (Body,Motor,4xTire reserved).");
+					logger.debug("CarBody:<" + carBody.getId()
+							+ ">, Producer:<" + carBody.getProducerId() + ">,  OrderId<"+carBody.getOrderId()+">");
+					logger.debug("CarMotor:<" + carMotor.getId()
+							+ ">, Producer:<" + carMotor.getProducerId() + ">,  OrderId<"+carMotor.getOrderId()+">");
+
+					// save back to in-memory-DB but not in free LIST, into used
+					// List
+					CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
+					CarPartDaoSimpleImpl.getInstance().saveCarMotor(carMotor);
+
+					List<CarPartDTO> carTireDTOs = new ArrayList<CarPartDTO>();
+
+					for (CarTire carTire : carTires) {
+						logger.debug("CarTire:<" + carTire.getId()
+								+ ">, Producer:<" + carTire.getProducerId()
+								+ ">,  OrderId<"+carTire.getOrderId()+">");
+
+						CarPartDTO carTireDTO = new CarPartDTO();
+						carTireDTO.id = carTire.getId();
+						carTireDTO.producerId = carTire.getProducerId();
+						carTireDTO.carPartType = carTire.getCarPartType();
+						carTireDTO.isDefect = carTire.isDefect();
+						carTireDTO.orderId = carTire.getOrderId();
+
+						carTireDTOs.add(carTireDTO);
+
+						CarPartDaoSimpleImpl.getInstance().saveCarTire(carTire);
+					}
+
+					// create Data Transfer Object (minimal objects containing
+					// only
+					// IDs...)
+					CarDTO carDTO = new CarDTO();
+
+					CarPartDTO carBodyDTO = new CarPartDTO();
+					carBodyDTO.id = carBody.getId();
+					carBodyDTO.bodyColor = carBody.getColor();
+					carBodyDTO.painterId = carBody.getPainterWorkerId();
+					carBodyDTO.producerId = carBody.getProducerId();
+					carBodyDTO.carPartType = carBody.getCarPartType();
+					carBodyDTO.isDefect = carBody.isDefect();
+					carBodyDTO.orderId = carBody.getOrderId();
+					carBodyDTO.requestedBodyColorByOrder = carBody.getRequestedColorByOrder();
+					carDTO.carBody = carBodyDTO;
+
+					CarPartDTO carMotorDTO = new CarPartDTO();
+					carMotorDTO.id = carMotor.getId();
+					carMotorDTO.producerId = carMotor.getProducerId();
+					carMotorDTO.carPartType = carMotor.getCarPartType();
+					carMotorDTO.isDefect = carMotor.isDefect();
+					carMotorDTO.carMotorType = carMotor.getMotorType();
+					carMotorDTO.orderId = carMotor.getOrderId();
+
+					carDTO.carMotor = carMotorDTO;
+
+					carDTO.carTires = carTireDTOs;
+
+					Car car = new Car(carBody, carMotor, carTires);
+					CarDaoSimpleImpl.getInstance().saveCarToAssemble(car);
+
+					if (car.getId() != null) {
+						carDTO.id = car.getId();
+						carDTO.orderId = car.getOrderId();
+					}
+
+					// send carDTO to assemblingJobQueue
+
+					outObjectMessage = session.createObjectMessage(carDTO);
+					outObjectMessage.setStringProperty("type", "car");
+					// TODO set COLOR if HIPRIO and send to HIPRIO
+					producerAssemblingJobHiPrio.send(outObjectMessage);
+
+					logger.debug("HiPrio OrderId<" + carBody.getOrderId()
+							+ "> AssembleJob was send out to HiPrio Queue");
+
+				} else {
+
+					CarBody carBody = order.getSingleBodyPainterJob();
+
+					if (carBody != null) {
+						// PainterJob for single Body is available
+
+						logger.debug("HiPrio OrderId<" + carBody.getOrderId()
+								+ ">: PainterJob is possible (CarBody<"
+								+ carBody.getId() + "> reserved).");
+
+						// save back to in-memory-DB but not in free LIST, into
+						// used
+						// CarPart
+						// List
+						CarPartDaoSimpleImpl.getInstance().saveCarBody(carBody);
+
+						CarPartDTO carBodyDTO = new CarPartDTO();
+						carBodyDTO.id = new Long(carBody.getId());
+						carBodyDTO.carPartType = carBody.getCarPartType();
+						carBodyDTO.producerId = carBody.getProducerId();
+						carBodyDTO.carPartType = carBody.getCarPartType();
+						carBodyDTO.isDefect = carBody.isDefect();
+						carBodyDTO.requestedBodyColorByOrder = carBody
+								.getRequestedColorByOrder();
+						carBodyDTO.orderId = carBody.getOrderId();
+
+						// send carBodyDTO to painterJobQueue
+
+						outObjectMessage = session
+								.createObjectMessage(carBodyDTO);
+						outObjectMessage.setStringProperty(
+								"type",
+								"carBody_"
+										+ carBodyDTO.requestedBodyColorByOrder
+												.toString());
+						// TODO set COLOR if HIPRIO and send to HIPRIO
+
+						producerPainterJobHiPrio.send(outObjectMessage);
+
+						logger.debug("HiPrio OrderId<" + carBody.getOrderId()
+								+ "> PainterJob with CarBody<" + carBodyDTO.id
+								+ "> is send out to HiPrio QUEUE");
+					}
+
+				}
+			}
+		}
+
+	}
+
+	private void checkOrders(MessageProducer producerUpdateGUI) throws JMSException {
+
+		// for all orders check if relevant parts can be assigned?
+		Collection<Order> syncCollection = OrderDaoSimpleImpl.getInstance()
+				.getAllNewOrders();
+
+		ObjectMessage outObjectMessage = null;
+
+		synchronized (syncCollection) {
+			Iterator<Order> iterator = syncCollection.iterator();
+
+			while (iterator.hasNext()) {
+				Order order = iterator.next();
+
+				// only if order requires CarPart otherwise assign to next one!
+				if (order.requiresCarPart()) {
+					List<CarPart> assignedCarParts = CarPartDaoSimpleImpl
+							.getInstance().assignFreeCarPartsOrder(order);
+
+					for (CarPart carPart : assignedCarParts) {
+						outObjectMessage = null;
+
+						if (carPart.getCarPartType() == CarPartType.CAR_TIRE) {
+							CarTire carTire = (CarTire) carPart;
+
+							CarPartDTO carTireDTO = new CarPartDTO();
+							carTireDTO.id = carTire.getId();
+							carTireDTO.producerId = carTire.getProducerId();
+							carTireDTO.carPartType = carTire.getCarPartType();
+							carTireDTO.isDefect = carTire.isDefect();
+							carTireDTO.orderId = carTire.getOrderId();
+
+							outObjectMessage = session
+									.createObjectMessage(carTireDTO);
+
+							// updateGUI with OrderID
+							producerUpdateGUI.send(outObjectMessage);
+
+						} else if (carPart.getCarPartType() == CarPartType.CAR_BODY) {
+							CarBody carBody = (CarBody) carPart;
+							CarPartDTO carBodyDTO = new CarPartDTO();
+							carBodyDTO.id = carBody.getId();
+							carBodyDTO.bodyColor = carBody.getColor();
+							carBodyDTO.painterId = carBody.getPainterWorkerId();
+							carBodyDTO.producerId = carBody.getProducerId();
+							carBodyDTO.carPartType = carBody.getCarPartType();
+							carBodyDTO.isDefect = carBody.isDefect();
+							carBodyDTO.requestedBodyColorByOrder = carBody.getRequestedColorByOrder();
+							carBodyDTO.orderId = carBody.getOrderId();
+
+							outObjectMessage = session
+									.createObjectMessage(carBodyDTO);
+
+							// updateGUI with OrderID
+							producerUpdateGUI.send(outObjectMessage);
+
+						} else if (carPart.getCarPartType() == CarPartType.CAR_MOTOR) {
+							CarMotor carMotor = (CarMotor) carPart;
+							CarPartDTO carMotorDTO = new CarPartDTO();
+							carMotorDTO.id = carMotor.getId();
+							carMotorDTO.producerId = carMotor.getProducerId();
+							carMotorDTO.carPartType = carMotor.getCarPartType();
+							carMotorDTO.isDefect = carMotor.isDefect();
+							carMotorDTO.carMotorType = carMotor.getMotorType();
+							carMotorDTO.orderId = carMotor.getOrderId();
+
+							outObjectMessage = session
+									.createObjectMessage(carMotorDTO);
+
+							// updateGUI with OrderID
+							producerUpdateGUI.send(outObjectMessage);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -243,7 +536,7 @@ public class JobManagementListener implements MessageListener,
 				carTireDTO.producerId = carTire.getProducerId();
 				carTireDTO.carPartType = carTire.getCarPartType();
 				carTireDTO.isDefect = carTire.isDefect();
-
+				carTireDTO.orderId = carTire.getOrderId();
 
 				carTireDTOs.add(carTireDTO);
 
@@ -261,7 +554,7 @@ public class JobManagementListener implements MessageListener,
 			carBodyDTO.producerId = carBody.getProducerId();
 			carBodyDTO.carPartType = carBody.getCarPartType();
 			carBodyDTO.isDefect = carBody.isDefect();
-
+			carBodyDTO.orderId = carMotor.getOrderId();
 
 			carDTO.carBody = carBodyDTO;
 
@@ -271,6 +564,7 @@ public class JobManagementListener implements MessageListener,
 			carMotorDTO.carPartType = carMotor.getCarPartType();
 			carMotorDTO.isDefect = carMotor.isDefect();
 			carMotorDTO.carMotorType = carMotor.getMotorType();
+			carMotorDTO.orderId = carMotor.getOrderId();
 
 			carDTO.carMotor = carMotorDTO;
 
@@ -281,6 +575,7 @@ public class JobManagementListener implements MessageListener,
 
 			if (car.getId() != null) {
 				carDTO.id = car.getId();
+				carDTO.orderId = carDTO.orderId;
 			}
 
 			// send carDTO to assemblingJobQueue
@@ -315,6 +610,7 @@ public class JobManagementListener implements MessageListener,
 				carBodyDTO.producerId = carBody.getProducerId();
 				carBodyDTO.carPartType = carBody.getCarPartType();
 				carBodyDTO.isDefect = carBody.isDefect();
+				carBodyDTO.orderId = carBody.getOrderId();
 
 				// send carBodyDTO to painterJobQueue
 
@@ -344,7 +640,7 @@ public class JobManagementListener implements MessageListener,
 			if (session != null) {
 				session.close();
 			}
-			if(context != null)
+			if (context != null)
 				context.close();
 
 		} catch (Exception e) {

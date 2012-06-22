@@ -22,14 +22,14 @@ public class Car implements Serializable {
 	private CarMotor motor;
 	private List<CarTire> tires;
 
-	private boolean isDefect;
+	private Boolean isDefect = null;
 
 	private Long testerAllPartsAssembledWorkerId;
 	private Long testerIsDefectWorkerId;
 
 	private Long orderId;
 
-	private boolean isTestingFinished;
+	private Boolean isTestingFinished = null;
 
 	@Index(label="type")
 	private CarPartType carPartType;
@@ -48,6 +48,7 @@ public class Car implements Serializable {
 		this.tires = tires;
 		this.painterWorkerId = null;
 		this.logisticWorkerId = null;
+		this.orderId = body.orderId;
 	}
 
 	public Car(Long assemblyWorkerId, CarBody body, CarMotor motor, List<CarTire> tires) {
@@ -114,11 +115,11 @@ public class Car implements Serializable {
 		this.logisticWorkerId = logisticWorkerId;
 	}
 
-	public boolean isDefect() {
+	public Boolean isDefect() {
 		return isDefect;
 	}
 
-	public void setDefect(boolean isDefect) {
+	public void setDefect(Boolean isDefect) {
 		this.isDefect = isDefect;
 	}
 
@@ -147,11 +148,11 @@ public class Car implements Serializable {
 		this.testerIsDefectWorkerId = testerIsDefectWorkerId;
 	}
 
-	public boolean isTestingFinished() {
+	public Boolean isTestingFinished() {
 		return isTestingFinished;
 	}
 
-	public void setTestingFinished(boolean isTestingFinished) {
+	public void setTestingFinished(Boolean isTestingFinished) {
 		this.isTestingFinished = isTestingFinished;
 	}
 

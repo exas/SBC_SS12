@@ -19,9 +19,9 @@ public abstract class CarPart implements Serializable {
 	protected CarPartType carPartType;
 	protected Long carId;
 
-	protected boolean isFree;
+	protected Boolean isFree;
 
-	protected boolean isDefect;
+	protected Boolean isDefect;
 
 	public CarPart() {
 		this.setCarId(null);
@@ -67,19 +67,19 @@ public abstract class CarPart implements Serializable {
 		this.carId = carId;
 	}
 
-	public boolean isFree() {
+	public Boolean isFree() {
 		return isFree;
 	}
 
-	public void setFree(boolean isFree) {
+	public void setFree(Boolean isFree) {
 		this.isFree = isFree;
 	}
 
-	public boolean isDefect() {
+	public Boolean isDefect() {
 		return isDefect;
 	}
 
-	public void setDefect(boolean isDefect) {
+	public void setDefect(Boolean isDefect) {
 		this.isDefect = isDefect;
 	}
 }

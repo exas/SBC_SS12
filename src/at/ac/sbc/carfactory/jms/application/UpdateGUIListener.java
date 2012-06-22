@@ -54,6 +54,7 @@ public class UpdateGUIListener implements MessageListener, ExceptionListener {
 	    			car.setAssemblyWorkerId(carDTO.assemblyWorkerId);
 	    			car.setLogisticWorkerId(carDTO.logisticWorkerId);
 	    			car.setDefect(carDTO.isDefect);
+
 	    			car.setOrderId(carDTO.orderId);
 	    			car.setTestingFinished(carDTO.isTestingFinished);
 	    			car.setTesterAllPartsAssembledWorkerId(carDTO.testerAllPartsAssembledWorkerId);
@@ -66,6 +67,8 @@ public class UpdateGUIListener implements MessageListener, ExceptionListener {
 		    			carBody.setId(carDTO.carBody.id);
 		    			carBody.setPainterWorkerId(carDTO.carBody.painterId);
 		    			carBody.setProducerId(carDTO.carBody.producerId);
+		    			carBody.setDefect(carDTO.carBody.isDefect);
+		    			carBody.setOrderId(carDTO.carBody.orderId);
 		    			car.setBody(carBody);
 	    			}
 
@@ -75,6 +78,8 @@ public class UpdateGUIListener implements MessageListener, ExceptionListener {
 		    			carMotor.setId(carDTO.carMotor.id);
 		    			carMotor.setProducerId(carDTO.carMotor.producerId);
 		    			carMotor.setMotorType(carDTO.carMotor.carMotorType);
+		    			carMotor.setDefect(carDTO.carMotor.isDefect);
+		    			carMotor.setOrderId(carDTO.carMotor.orderId);
 		    			car.setMotor(carMotor);
 	    			}
 
@@ -88,7 +93,8 @@ public class UpdateGUIListener implements MessageListener, ExceptionListener {
 		    				carTire.setId(c.id);
 		    				carTire.setCarId(c.carId);
 		    				carTire.setProducerId(c.producerId);
-
+		    				carTire.setDefect(c.isDefect);
+		    				carTire.setOrderId(c.orderId);
 		    				carTires.add(carTire);
 		    			}
 

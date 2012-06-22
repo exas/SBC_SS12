@@ -1,5 +1,6 @@
 package at.ac.sbc.carfactory.backend;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,8 +30,8 @@ public class OrderDaoSimpleImpl {
 		newOrderQueue.add(order.getId());
 	}
 
-	public Set<Order> getAllNewOrders() {
-        return (Set<Order>) Collections.synchronizedCollection(newOrders.values());
+	public Collection<Order> getAllNewOrders() {
+        return Collections.synchronizedCollection(newOrders.values());
     }
 
 	public Order getNewOrderById(final Long id) {

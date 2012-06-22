@@ -33,9 +33,6 @@ public class AssignWorkPanel extends JDialog {
 		this.producerID = producerID;
 		this.parent = parent;
 		this.initializeComponents();
-
-
-
 	}
 
 	private void initializeComponents() {
@@ -70,7 +67,7 @@ public class AssignWorkPanel extends JDialog {
 		final JComboBox carPartList = new JComboBox(carPartTypes);
 		carPartList.setSelectedIndex(0);
 
-		Integer[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 2000, 8000 };
+		Integer[] array = { 1, 4, 8, 12, 24, 56, 200, 400, 2000, 8000 };
 
 		final JComboBox numPartList = new JComboBox(array);
 		numPartList.setSelectedIndex(0);

@@ -84,7 +84,7 @@ public class Logistician extends Worker implements ExceptionListener {
 			connection.start();
 		} catch (Throwable t) {
 			// JMSException could be thrown
-			logger.error("<" + this.getId() + ">:setup:" + "Exception: "
+			logger.error("<" + this.getWorkerId() + ">:setup:" + "Exception: "
 					+ t.toString());
 		}
 	}
@@ -122,11 +122,11 @@ public class Logistician extends Worker implements ExceptionListener {
 	}
 
 	public void processMessage(Message inMessage) {
-		logger.debug("<" + this.getId() + ">: on Message");
+		logger.debug("<" + this.getWorkerId() + ">: on Message");
 
 		if (session == null) {
 			logger.error("<"
-					+ this.getId()
+					+ this.getWorkerId()
 					+ ">:onMessage  Session is NULL, RETURN, no processing of message possibel.");
 			return;
 		}
@@ -149,23 +149,38 @@ public class Logistician extends Worker implements ExceptionListener {
 				if (inObjectMessage.getObject() instanceof CarDTO) {
 					CarDTO carDTO = (CarDTO) inObjectMessage.getObject();
 
-					logger.debug("<" + this.getId()
+					logger.debug("<" + this.getWorkerId()
 							+ ">: Received Msg from AssembledCarQueue");
 
 					if (carDTO.id != null) {
-						carDTO.logisticWorkerId = (this.getId());
+						carDTO.logisticWorkerId = (this.getWorkerId());
 
 
 						if (carDTO.isDefect) {
+							logger.debug("<"
+									+ this.getWorkerId()
+									+ ">: AssembledCar with Car<"
+									+ carDTO.id
+									+ "> is DEFECT - disassembling and sending back. Updating GUI and DB via Message.");
+
+							outObjectMessage = session.createObjectMessage(carDTO);
+							producerUpdateGUI.send(outObjectMessage);
 							// TODO disassemble and reintegrate each carpart
 							// again into the system.
 							if(!carDTO.carBody.isDefect()) {
 								//if not defect back to system
 								carDTO.carBody.carId = null;
 								carDTO.carBody.orderId = null;
-								carDTO.carBody.requestedCarColorByOrder = null;
+								carDTO.carBody.requestedBodyColorByOrder = null;
 
 								outObjectMessage = session.createObjectMessage(carDTO.carBody);
+								producerUpdateDB.send(outObjectMessage);
+
+								logger.debug("<"
+										+ this.getWorkerId()
+										+ ">:CarBody<"
+										+ carDTO.carBody.id
+										+ "> is ok sending back to System. Updating GUI and DB via Message.");
 							}
 
 							if(!carDTO.carMotor.isDefect()) {
@@ -174,6 +189,13 @@ public class Logistician extends Worker implements ExceptionListener {
 								carDTO.carMotor.orderId = null;
 
 								outObjectMessage = session.createObjectMessage(carDTO.carMotor);
+								producerUpdateDB.send(outObjectMessage);
+
+								logger.debug("<"
+										+ this.getWorkerId()
+										+ ">:carMotor<"
+										+ carDTO.carMotor.id
+										+ "> is ok sending back to System. Updating GUI and DB via Message.");
 							}
 
 							for(CarPartDTO carTireDTO : carDTO.carTires) {
@@ -183,11 +205,18 @@ public class Logistician extends Worker implements ExceptionListener {
 									carTireDTO.orderId = null;
 
 									outObjectMessage = session.createObjectMessage(carTireDTO);
+									producerUpdateDB.send(outObjectMessage);
+
+									logger.debug("<"
+											+ this.getWorkerId()
+											+ ">:carTire<"
+											+ carTireDTO.id
+											+ "> is ok sending back to System. Updating GUI and DB via Message.");
 								}
 
 							}
 
-							producerUpdateDB.send(outObjectMessage);
+
 
 						} else {
 							outObjectMessage = session.createObjectMessage(carDTO);
@@ -196,7 +225,7 @@ public class Logistician extends Worker implements ExceptionListener {
 							producerUpdateDB.send(outObjectMessage);
 
 							logger.debug("<"
-									+ this.getId()
+									+ this.getWorkerId()
 									+ ">: AssembledCar with Car<"
 									+ carDTO.id
 									+ "> is send out and finished. Updating GUI and DB via Message.");

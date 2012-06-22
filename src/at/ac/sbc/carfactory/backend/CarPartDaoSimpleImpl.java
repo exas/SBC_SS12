@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
+import at.ac.sbc.carfactory.domain.Order;
+
 import at.ac.sbc.carfactory.domain.CarPart;
 import at.ac.sbc.carfactory.domain.CarBody;
 import at.ac.sbc.carfactory.domain.CarMotor;
@@ -35,6 +37,15 @@ public class CarPartDaoSimpleImpl {
 	private final ConcurrentMap<Long, CarTire> freeCarTires = new ConcurrentHashMap<Long, CarTire>();
 	private final ConcurrentLinkedQueue<Long> freeCarTireIdQueue = new ConcurrentLinkedQueue<Long>();
 
+	private final ConcurrentMap<Long, CarBody> freeCarBodysForOrder = new ConcurrentHashMap<Long, CarBody>();
+	private final ConcurrentLinkedQueue<Long> freeCarBodyIdForOrderQueue = new ConcurrentLinkedQueue<Long>();
+
+	private final ConcurrentMap<Long, CarMotor> freeCarMotorsForOrder = new ConcurrentHashMap<Long, CarMotor>();
+	private final ConcurrentLinkedQueue<Long> freeCarMotorIdForOrderQueue = new ConcurrentLinkedQueue<Long>();
+
+	private final ConcurrentMap<Long, CarTire> freeCarTiresForOrder = new ConcurrentHashMap<Long, CarTire>();
+	private final ConcurrentLinkedQueue<Long> freeCarTireIdForOrderQueue = new ConcurrentLinkedQueue<Long>();
+
 	// private static final AtomicLong NEXT_CAR_ID = new AtomicLong(1);
 
 	private CarPartDaoSimpleImpl() {
@@ -58,15 +69,10 @@ public class CarPartDaoSimpleImpl {
 		return carBodys.get(id);
 	}
 
-	public synchronized void updateCarBodyFromPainter(final Long id,
+	public synchronized void updateCarBodyById(final Long id,
 			CarBody carBodyForUpdate) {
 		final CarBody carBodyToUpdate = getCarBodyById(id);
 
-		if (carBodyForUpdate.getPainterWorkerId() == null
-				|| carBodyForUpdate.getId() != carBodyToUpdate.getId()) {
-			// no Painter RETURN
-			return;
-		}
 		carBodyToUpdate.setCarId(carBodyForUpdate.getCarId());
 		carBodyToUpdate.setCarPartType(carBodyForUpdate.getCarPartType());
 		carBodyToUpdate.setColor(carBodyForUpdate.getColor());
@@ -93,11 +99,6 @@ public class CarPartDaoSimpleImpl {
 		}
 	}
 
-	public void updateCarBodyById(final Long id, final CarBody carBodyForUpdate) {
-		final CarBody carBodyToUpdate = getCarBodyById(id);
-		// TODO update fields
-	}
-
 	public void deleteCarBodyById(final Long id) {
 		carBodys.remove(id);
 	}
@@ -116,10 +117,31 @@ public class CarPartDaoSimpleImpl {
 		return carMotors.get(id);
 	}
 
-	public void updateCarMotorById(final Long id,
-			final CarMotor carMotorForUpdate) {
+	public synchronized void updateCarMotorById(final Long id,
+			CarMotor carMotorForUpdate) {
 		final CarMotor carMotorToUpdate = getCarMotorById(id);
-		// TODO update fields
+		carMotorToUpdate.setCarId(carMotorForUpdate.getCarId());
+		carMotorToUpdate.setCarPartType(carMotorForUpdate.getCarPartType());
+		carMotorToUpdate.setMotorType(carMotorForUpdate.getMotorType());
+		carMotorToUpdate.setDefect(carMotorForUpdate.isDefect());
+		carMotorToUpdate.setFree(carMotorForUpdate.isFree());
+		carMotorToUpdate.setOrderId(carMotorForUpdate.getOrderId());
+		carMotorToUpdate.setProducerId(carMotorForUpdate.getProducerId());
+
+		deleteCarMotorById(id);
+
+		freeCarMotors.putIfAbsent(carMotorToUpdate.getId(), carMotorToUpdate);
+
+		// ADD CAR MOTOR IN FRONT OF ALL OTHERs since already used and should be
+		// the oldest
+		Object[] items = freeCarMotorIdQueue.toArray();
+		freeCarMotorIdQueue.clear();
+		freeCarMotorIdQueue.add(carMotorToUpdate.getId()); // new first element
+
+		for (Object item : items) {
+			Long itemId = (Long) item;
+			freeCarMotorIdQueue.add(itemId);
+		}
 	}
 
 	public void deleteCarMotorById(final Long id) {
@@ -140,9 +162,30 @@ public class CarPartDaoSimpleImpl {
 		return carTires.get(id);
 	}
 
-	public void updateCarTireById(final Long id, final CarTire carTireForUpdate) {
-		final CarTire carBodyToUpdate = getCarTireById(id);
-		// TODO update fields
+	public synchronized void updateCarTireById(final Long id,
+			CarTire carTireForUpdate) {
+		final CarTire carTireToUpdate = getCarTireById(id);
+		carTireToUpdate.setCarId(carTireForUpdate.getCarId());
+		carTireToUpdate.setCarPartType(carTireForUpdate.getCarPartType());
+		carTireToUpdate.setDefect(carTireForUpdate.isDefect());
+		carTireToUpdate.setFree(carTireForUpdate.isFree());
+		carTireToUpdate.setOrderId(carTireForUpdate.getOrderId());
+		carTireToUpdate.setProducerId(carTireForUpdate.getProducerId());
+
+		deleteCarTireById(id);
+
+		freeCarTires.putIfAbsent(carTireToUpdate.getId(), carTireToUpdate);
+
+		// ADD CAR TIRE IN FRONT OF ALL OTHERs since already used and should be
+		// the oldest
+		Object[] items = freeCarTireIdQueue.toArray();
+		freeCarTireIdQueue.clear();
+		freeCarTireIdQueue.add(carTireToUpdate.getId()); // new first element
+
+		for (Object item : items) {
+			Long itemId = (Long) item;
+			freeCarTireIdQueue.add(itemId);
+		}
 	}
 
 	public void deleteCarTireById(final Long id) {
@@ -220,6 +263,60 @@ public class CarPartDaoSimpleImpl {
 
 	public void deleteFreeCarTireById(final Long id) {
 		freeCarTires.remove(id);
+	}
+
+	public void saveFreeCarBodyForOrder(final CarBody carBody) {
+		freeCarBodysForOrder.putIfAbsent(carBody.getId(), carBody);
+		freeCarBodyIdForOrderQueue.add(carBody.getId());
+	}
+
+	public Set<CarBody> getAllFreeCarBodysForOrder() {
+		return (Set<CarBody>) Collections.synchronizedCollection(carBodys
+				.values());
+	}
+
+	public CarBody getFreeCarBodyForOrderById(final Long id) {
+		return carBodys.get(id);
+	}
+
+	public void deleteFreeCarBodyForOrderById(final Long id) {
+		carBodys.remove(id);
+	}
+
+	public void saveFreeCarMotorForOrder(final CarMotor carMotor) {
+		freeCarMotorsForOrder.putIfAbsent(carMotor.getId(), carMotor);
+		freeCarMotorIdForOrderQueue.add(carMotor.getId());
+	}
+
+	public Set<CarMotor> getAllFreeCarMotorsForOrder() {
+		return (Set<CarMotor>) Collections
+				.synchronizedCollection(freeCarMotorsForOrder.values());
+	}
+
+	public CarMotor getFreeCarMotorForOrderById(final Long id) {
+		return freeCarMotorsForOrder.get(id);
+	}
+
+	public void deleteFreeCarMotorForOrderById(final Long id) {
+		freeCarMotorsForOrder.remove(id);
+	}
+
+	public void saveFreeCarTireForOrder(final CarTire carTire) {
+		freeCarTiresForOrder.putIfAbsent(carTire.getId(), carTire);
+		freeCarTireIdForOrderQueue.add(carTire.getId());
+	}
+
+	public Set<CarTire> getAllFreeCarTiresForOrder() {
+		return (Set<CarTire>) Collections
+				.synchronizedCollection(freeCarTiresForOrder.values());
+	}
+
+	public CarTire getFreeCarTireForOrderById(final Long id) {
+		return freeCarTiresForOrder.get(id);
+	}
+
+	public void deleteFreeCarTireForOrderById(final Long id) {
+		freeCarTiresForOrder.remove(id);
 	}
 
 	// returns empty list if no carTires available or a set of 4 is not
@@ -401,20 +498,180 @@ public class CarPartDaoSimpleImpl {
 	// }
 
 	public synchronized CarBody getSingleBodyPainterJob() {
-		Long nextCarBodyId = freeCarBodyIdQueue.peek();
+		Long nextCarBodyId = null;
 		CarBody nextCarBody = null;
+		boolean foundCarBodyNotPainted = false;
 
-		if (nextCarBodyId != null) {
-			nextCarBody = freeCarBodys.get(nextCarBodyId);
+		Iterator<Long> it = freeCarBodyIdQueue.iterator();
+
+		while (it.hasNext()) {
+			nextCarBodyId = it.next();
+
+			if (nextCarBodyId != null) {
+				nextCarBody = freeCarBodys.get(nextCarBodyId);
+			}
+
+			if (nextCarBody != null) {
+				if (!nextCarBody.isPainted() || nextCarBody.getColor() == null) {
+					freeCarBodyIdQueue.remove(nextCarBodyId);
+					freeCarBodys.remove(nextCarBodyId);
+					foundCarBodyNotPainted = true;
+					break;
+				}
+			}
+		}
+		if(foundCarBodyNotPainted)
+			return nextCarBody;
+		else
+			return null;
+	}
+
+	/**
+	 * returns updated carParts which are assigned now to Order!
+	 * @param order
+	 * @return
+	 */
+	public synchronized List<CarPart> assignFreeCarPartsOrder(Order order) {
+		List<CarPart> assignedCarParts = new ArrayList<CarPart>();
+
+		// CHECK for each carPart all the lists and assign carParts to order
+
+		if (order.requiresCarTire()) {
+			Iterator<Long> it = freeCarTireIdQueue.iterator();
+
+			while (it.hasNext()) {
+				Long id = it.next();
+
+				CarTire carTire = freeCarTires.get(id);
+				if (carTire != null) {
+
+					if (order.addCarTire(carTire)) {
+
+						freeCarTireIdQueue.remove(id);
+						freeCarTires.remove(id);
+
+						carTire.setOrderId(order.getId());
+						assignedCarParts.add(carTire);
+						freeCarTiresForOrder.putIfAbsent(carTire.getId(),
+								carTire);
+						freeCarTireIdForOrderQueue.add(carTire.getId());
+					}
+
+					// if no more carTire required break!
+					if (!order.requiresCarTire())
+						break;
+
+				}
+			}
+
 		}
 
-		if (nextCarBody != null) {
-			if (!nextCarBody.isPainted() || nextCarBody.getColor() == null) {
-				freeCarBodyIdQueue.remove(nextCarBodyId);
-				freeCarBodys.remove(nextCarBodyId);
+		if (order.requiresCarMotor()) {
+			Iterator<Long> it = freeCarMotorIdQueue.iterator();
+
+			// check every carMotor and add to OrderQueue if needed by Order
+			while (it.hasNext()) {
+				Long id = it.next();
+
+				CarMotor carMotor = freeCarMotors.get(id);
+				if (carMotor != null) {
+					// check if right motor
+					if (order.requiresCarMotor(carMotor.getMotorType())) {
+
+						if (order.addCarMotor(carMotor)) {
+
+							freeCarMotorIdQueue.remove(id);
+							freeCarMotors.remove(id);
+
+							carMotor.setOrderId(order.getId());
+
+							assignedCarParts.add(carMotor);
+							freeCarMotorsForOrder.putIfAbsent(carMotor.getId(),
+									carMotor);
+							freeCarMotorIdForOrderQueue.add(carMotor.getId());
+						}
+
+						// if no more carMotor required break!
+						if (!order.requiresCarMotor())
+							break;
+
+					}
+				}
 			}
 		}
 
-		return nextCarBody;
+		if (order.requiresCarBody()) {
+			Iterator<Long> it = freeCarBodyIdQueue.iterator();
+
+			while (it.hasNext()) {
+				Long id = it.next();
+
+				CarBody carBody = freeCarBodys.get(id);
+				if (carBody != null) {
+					// check if colored and if yes if color needed by order!
+					if (order.requiresCarBody(carBody.getColor())) {
+
+						if (order.addCarBody(carBody)) {
+							freeCarBodyIdQueue.remove(id);
+
+							freeCarBodys.remove(id);
+
+							carBody.setOrderId(order.getId());
+
+							if (!carBody.isPainted()) {
+								// if not painted request COLOR (mark Body with
+								// color)!
+								carBody.setRequestedColorByOrder(order
+										.getCarColor());
+							}
+
+							assignedCarParts.add(carBody);
+							freeCarBodysForOrder.putIfAbsent(carBody.getId(),
+									carBody);
+							freeCarBodyIdForOrderQueue.add(carBody.getId());
+						}
+
+						// if no more carbodys required break!
+						if (!order.requiresCarBody())
+							break;
+
+					}
+				}
+			}
+		}
+
+		return  assignedCarParts;
+
+	}
+
+	public synchronized CarBody getSingleBodyPainterJobByOrdes() {
+		Long nextCarBodyId = null;
+		CarBody nextCarBody = null;
+		boolean foundCarBodyNotPainted = false;
+
+		Iterator<Long> it = freeCarBodyIdForOrderQueue.iterator();
+
+		while (it.hasNext()) {
+			nextCarBodyId = it.next();
+
+			if (nextCarBodyId != null) {
+				nextCarBody = freeCarBodysForOrder.get(nextCarBodyId);
+			}
+
+			if (nextCarBody != null) {
+				if (!nextCarBody.isPainted() || nextCarBody.getColor() == null) {
+					freeCarBodyIdForOrderQueue.remove(nextCarBodyId);
+					freeCarBodysForOrder.remove(nextCarBodyId);
+					foundCarBodyNotPainted = true;
+					break;
+				}
+			}
+		}
+
+		if(foundCarBodyNotPainted)
+			return nextCarBody;
+		else
+			return null;
+
 	}
 }
